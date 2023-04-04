@@ -18,7 +18,7 @@ jobs:
 
       - name: Dependencies
         run: |
-          go mod download
+          go get .
 
       - name: Build
         run: go build -v ./...
