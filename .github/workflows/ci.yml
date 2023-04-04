@@ -1,8 +1,11 @@
 ---
 name: Continuous Integration
 on:
-  - push
-  - pull_request
+  push:
+
+  pull_request:
+
+  workflow_dispatch:
 
 jobs:
   build:
@@ -10,6 +13,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          path: go/src/github.com/dcjulian29/ansible-dev
 
       - name: Setup
         uses: actions/setup-go@v4
@@ -18,6 +23,10 @@ jobs:
 
       - name: Build
         run: go build -v ./...
+        env:
+          GOPATH: /home/runner/work/dcjulian29/ansible-dev/go
 
       - name: Test
         run: go test -v ./...
+        env:
+          GOPATH: /home/runner/work/dcjulian29/ansible-dev/go
