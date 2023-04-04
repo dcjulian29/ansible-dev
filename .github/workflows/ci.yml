@@ -2,10 +2,16 @@
 name: Continuous Integration
 on:
   push:
-    tags-ignore:
-      - '*'
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
 
   pull_request:
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
 
   workflow_dispatch:
 
