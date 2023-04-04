@@ -17,18 +17,18 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ env.GOPATH }}
+        working-directory: ${{ env.GOPATH }}/ansible-dev
 
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
-          path: ${{ env.GOPATH }}
+          path: ${{ env.GOPATH }}/ansible-dev
 
       - uses: actions/setup-go@v4
         with:
-          cache-dependency-path: ${{ env.GOPATH }}/go.sum
-          go-version-file: ${{ env.GOPATH }}/go.mod
+          cache-dependency-path: ${{ env.GOPATH }}/ansible-dev/go.sum
+          go-version-file: ${{ env.GOPATH }}/ansible-dev/go.mod
 
       - run: go version
 
