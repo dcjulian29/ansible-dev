@@ -15,7 +15,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
-          path: go/src/github.com/dcjulian29/ansible-dev
 
       - uses: actions/setup-go@v4
         with:
@@ -26,4 +25,4 @@ jobs:
           go build -v ./...
           go test -v ./...
         env:
-          GOPATH: /home/runner/work/ansible-dev/ansible-dev/go
+          GOPATH: /home/runner/work/ansible-dev/ansible-dev
