@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           cache-dependency-path: ${{ env.GOPATH }}/ansible-dev/go.sum
-          go-version-file: ${{ env.GOPATH }}/ansible-dev/go.sum/go.mod
+          go-version-file: ${{ env.GOPATH }}/ansible-dev/go.mod
 
       - run: go version
 
