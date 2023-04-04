@@ -1,3 +1,5 @@
 .ansible-dev.yml
 ansible-dev.exe
 ansible-dev
+
+dist/
