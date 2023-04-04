@@ -28,7 +28,7 @@ var cfgFile string
 
 var rootCmd = &cobra.Command{
 	Use:   "ansible-dev",
-	Short: "ansible-dev enables development of Ansible playbooks, roles, and modules to automate infrastructure provisioning tasks.",
+	Short: "ansible-dev enables development of Ansible playbooks, roles, and modules.",
 	Long: `ansible-dev integrates with Vagrant to enable users to define, develop, and test Ansible
 playbooks, roles, and modules. It allows users to define and manage infrastructure resources and
 uses the providers automation engine to provision and run plays.
