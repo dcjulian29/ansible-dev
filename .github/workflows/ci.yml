@@ -11,10 +11,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      GOPATH: ${{ github.workspace }}
+      GOBIN: ${{ github.workspace }}/bin
+
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/ansible-dev
+
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
+          path: ${{ env.GOPATH }}/ansible-dev
 
       - uses: actions/setup-go@v4
         with:
@@ -24,5 +33,3 @@ jobs:
           go get .
           go build -v ./...
           go test -v ./...
-        env:
-          GOPATH: /home/runner/work/ansible-dev/ansible-dev
