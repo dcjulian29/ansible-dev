@@ -3,13 +3,13 @@ name: Continuous Integration
 on:
   push:
     paths:
-      - '**.go'
+      - '**/*.go'
       - 'go.mod'
       - 'go.sum'
 
   pull_request:
     paths:
-      - '**.go'
+      - '**/*.go'
       - 'go.mod'
       - 'go.sum'
 
