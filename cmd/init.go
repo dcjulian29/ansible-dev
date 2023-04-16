@@ -23,16 +23,15 @@ import (
 )
 
 var (
-	force            bool
-	workingDirectory string
+	force bool
 
 	initCmd = &cobra.Command{
 		Use:   "init",
 		Short: "Initialize an development environment for Ansible development",
 		Long: `Initialize an development environment for Ansible development by creating the folder
-	structure and generating the needed files to quickly set up a virtual environment
-	ready for development. Vagrant can be used to manage the environment and connect
-	to troubleshoot and/or validate.`,
+structure and generating the needed files to quickly set up a virtual environment
+ready for development. Vagrant can be used to manage the environment and connect
+to troubleshoot and/or validate.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Initializing development environment...")
 
@@ -47,39 +46,7 @@ func init() {
 	initCmd.Flags().BoolVarP(&force, "force", "f", false, "overwrite an existing development environment")
 }
 
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-
-	return !info.IsDir()
-}
-
-func ensureDir(dirPath string) error {
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func ensureWorkingDirectoryAndExit() {
-	if workingDirectory != folderPath {
-		if err := os.Chdir(workingDirectory); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	}
-
-	os.Exit(0)
-}
-
 func init_env() {
-	workingDirectory, _ = os.Getwd()
-
 	if workingDirectory != folderPath {
 		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
 			fmt.Println("Creating development environment folder...")

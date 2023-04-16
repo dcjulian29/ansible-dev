@@ -25,8 +25,9 @@ import (
 )
 
 var (
-	cfgFile    string
-	folderPath string
+	cfgFile          string
+	folderPath       string
+	workingDirectory string
 
 	rootCmd = &cobra.Command{
 		Use:   "ansible-dev",
@@ -44,14 +45,16 @@ databases.`,
 )
 
 func Execute() {
+	workingDirectory, _ = os.Getwd()
+
 	rootCmd.AddCommand(
 		extension.NewVersionCobraCmd(
 			extension.WithUpgradeNotice("dcjulian29", "ansible-dev"),
 		),
 	)
 
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }
@@ -85,4 +88,34 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return !info.IsDir()
+}
+
+func ensureDir(dirPath string) error {
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(dirPath, 0755); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func ensureWorkingDirectoryAndExit() {
+	if workingDirectory != folderPath {
+		if err := os.Chdir(workingDirectory); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+
+	os.Exit(0)
 }
