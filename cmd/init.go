@@ -112,6 +112,7 @@ func init_env() {
 	}
 
 	ansible_cfg()
+	ansible_lint()
 	inventory_file()
 	vagrant_file()
 
@@ -252,6 +253,41 @@ func vagrant_file() {
   end
 
 end
+`)
+
+	_, err = file.Write(content)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func ansible_lint() {
+	fmt.Println("    ...   .ansible-lint")
+	file, err := os.Create(".ansible-lint")
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer file.Close()
+
+	content := []byte(`warn_list:
+  - internal-error
+  - no-handler
+  - experimental
+
+kinds:
+  - roles: "roles/"
+  - playbook: "playbooks/*.{yml,yaml}"
+  - tasks: "**/tasks/*.{yml,yaml}"
+  - vars: "**/vars/*.{yml,yaml}"
+  - meta: "**/meta/main.yml"
+  - yaml: "**/*.{yml,yaml}"
+
+verbosity: 1
 `)
 
 	_, err = file.Write(content)
