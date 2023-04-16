@@ -3,3 +3,10 @@ ansible-dev.exe
 ansible-dev
 
 dist/
+
+roles/
+playbooks/
+ansible.cfg
+.ansible-lint
+hosts.ini
+Vagrantfile
