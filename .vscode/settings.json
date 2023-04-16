@@ -1,9 +1,14 @@
 {
   "cSpell.words": [
+    "ansibledev",
+    "cpus",
     "dcjulian",
     "GOBIN",
     "GOPATH",
     "ldflags",
-    "szostok"
+    "modifyvm",
+    "szostok",
+    "uartmode",
+    "vmsvga"
   ]
 }
