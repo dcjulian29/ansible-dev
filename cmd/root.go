@@ -24,12 +24,14 @@ import (
 	"go.szostok.io/version/extension"
 )
 
-var cfgFile string
+var (
+	cfgFile    string
+	folderPath string
 
-var rootCmd = &cobra.Command{
-	Use:   "ansible-dev",
-	Short: "ansible-dev enables development of Ansible playbooks, roles, and modules.",
-	Long: `ansible-dev integrates with Vagrant to enable users to define, develop, and test Ansible
+	rootCmd = &cobra.Command{
+		Use:   "ansible-dev",
+		Short: "ansible-dev enables development of Ansible playbooks, roles, and modules.",
+		Long: `ansible-dev integrates with Vagrant to enable users to define, develop, and test Ansible
 playbooks, roles, and modules. It allows users to define and manage infrastructure resources and
 uses the providers automation engine to provision and run plays.
 
@@ -38,7 +40,8 @@ software applications across multiple hosting providers, reducing the time and e
 manage complex infrastructure environments. These playbooks, roles, and modules enable developers to
 create, manage, and provision infrastructure resources like virtual machines, load balancers, and
 databases.`,
-}
+	}
+)
 
 func Execute() {
 	rootCmd.AddCommand(
@@ -54,7 +57,10 @@ func Execute() {
 }
 
 func init() {
+	pwd, _ := os.Getwd()
+
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "specify configuration file")
+	rootCmd.PersistentFlags().StringVar(&folderPath, "path", pwd, "path to development folder")
 	cobra.OnInitialize(initConfig)
 }
 

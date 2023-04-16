@@ -23,8 +23,8 @@ import (
 )
 
 var (
-	path  string
-	force bool
+	force            bool
+	workingDirectory string
 
 	initCmd = &cobra.Command{
 		Use:   "init",
@@ -44,10 +44,7 @@ var (
 func init() {
 	rootCmd.AddCommand(initCmd)
 
-	pwd, _ := os.Getwd()
-
 	initCmd.Flags().BoolVarP(&force, "force", "f", false, "overwrite an existing development environment")
-	initCmd.Flags().StringVar(&path, "path", pwd, "path to development folder")
 }
 
 func fileExists(filename string) bool {
@@ -61,30 +58,38 @@ func fileExists(filename string) bool {
 
 func ensureDir(dirPath string) error {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err := os.MkdirAll(dirPath, 0755)
-		if err != nil {
+		if err := os.MkdirAll(dirPath, 0755); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
-func init_env() {
-	pwd, _ := os.Getwd()
+func ensureWorkingDirectoryAndExit() {
+	if workingDirectory != folderPath {
+		if err := os.Chdir(workingDirectory); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
 
-	if pwd != path {
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+	os.Exit(0)
+}
+
+func init_env() {
+	workingDirectory, _ = os.Getwd()
+
+	if workingDirectory != folderPath {
+		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
 			fmt.Println("Creating development environment folder...")
-			err := os.MkdirAll(path, 0755)
-			if err != nil {
+			if err := os.MkdirAll(folderPath, 0755); err != nil {
 				fmt.Println("Unable to create development environment folder!")
 				os.Exit(1)
 			}
 		}
 
-		err := os.Chdir(path)
-
-		if err != nil {
+		if err := os.Chdir(folderPath); err != nil {
 			fmt.Println("Unable to access development environment folder!")
 			os.Exit(1)
 		}
@@ -92,23 +97,19 @@ func init_env() {
 
 	if fileExists("ansible.cfg") && !force {
 		fmt.Println("ERROR: The folder for the ansible development environment already contains an Ansible context and force was not provided.")
-		os.Exit(1)
+		ensureWorkingDirectoryAndExit()
 	}
 
 	fmt.Println("    ...   roles/")
-	err := ensureDir("roles")
-
-	if err != nil {
+	if err := ensureDir("roles"); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		ensureWorkingDirectoryAndExit()
 	}
 
 	fmt.Println("    ...   playbooks/")
-	err = ensureDir("playbooks")
-
-	if err != nil {
+	if err := ensureDir("playbooks"); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		ensureWorkingDirectoryAndExit()
 	}
 
 	ansible_cfg()
@@ -116,12 +117,7 @@ func init_env() {
 	inventory_file()
 	vagrant_file()
 
-	if pwd != path {
-		err := os.Chdir(pwd)
-		if err != nil {
-			os.Exit(1)
-		}
-	}
+	ensureWorkingDirectoryAndExit()
 }
 
 func ansible_cfg() {
@@ -153,8 +149,7 @@ verbosity                   = 1
 always                      = true
 `)
 
-	_, err = file.Write(content)
-	if err != nil {
+	if _, err = file.Write(content); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -183,9 +178,7 @@ alma
 fedora
 `)
 
-	_, err = file.Write(content)
-
-	if err != nil {
+	if _, err = file.Write(content); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -255,9 +248,7 @@ func vagrant_file() {
 end
 `)
 
-	_, err = file.Write(content)
-
-	if err != nil {
+	if _, err = file.Write(content); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -290,9 +281,7 @@ kinds:
 verbosity: 1
 `)
 
-	_, err = file.Write(content)
-
-	if err != nil {
+	if _, err = file.Write(content); err != nil {
 		fmt.Println(err)
 		return
 	}
