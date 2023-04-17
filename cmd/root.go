@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -127,4 +128,16 @@ func ensureWorkingDirectoryAndExit() {
 	}
 
 	os.Exit(0)
+}
+
+func executeExternalProgram(program string, params ...string) {
+	cmd := exec.Command("ansible-galaxy", params...)
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+
+	if err := cmd.Run(); err != nil {
+		fmt.Println(err)
+		ensureWorkingDirectoryAndExit()
+	}
 }
