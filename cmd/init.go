@@ -56,10 +56,7 @@ func init_env() {
 			}
 		}
 
-		if err := os.Chdir(folderPath); err != nil {
-			fmt.Println("Unable to access development environment folder!")
-			os.Exit(1)
-		}
+		ensureAnsibleDirectory()
 	}
 
 	if fileExists("ansible.cfg") && !force {

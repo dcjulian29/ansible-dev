@@ -109,6 +109,15 @@ func ensureDir(dirPath string) error {
 	return nil
 }
 
+func ensureAnsibleDirectory() {
+	if workingDirectory != folderPath {
+		if err := os.Chdir(folderPath); err != nil {
+			fmt.Println("Unable to access development environment folder!")
+			os.Exit(1)
+		}
+	}
+}
+
 func ensureWorkingDirectoryAndExit() {
 	if workingDirectory != folderPath {
 		if err := os.Chdir(workingDirectory); err != nil {
