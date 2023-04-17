@@ -12,3 +12,4 @@ hosts.ini
 Vagrantfile
 
 requirements.yml
+ansible.log
