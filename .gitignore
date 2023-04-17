@@ -10,3 +10,5 @@ ansible.cfg
 .ansible-lint
 hosts.ini
 Vagrantfile
+
+requirements.yml
