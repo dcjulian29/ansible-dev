@@ -27,7 +27,7 @@ var (
 
 	initCmd = &cobra.Command{
 		Use:   "init",
-		Short: "Initialize an development environment for Ansible development",
+		Short: "Initialize an Ansible development vagrant environment",
 		Long: `Initialize an development environment for Ansible development by creating the folder
 structure and generating the needed files to quickly set up a virtual environment
 ready for development. Vagrant can be used to manage the environment and connect
