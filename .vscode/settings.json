@@ -7,6 +7,7 @@
     "GOPATH",
     "ldflags",
     "modifyvm",
+    "olekukonko",
     "szostok",
     "uartmode",
     "vmsvga"
