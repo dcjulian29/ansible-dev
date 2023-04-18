@@ -17,7 +17,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -127,15 +126,7 @@ func remove_role() {
 		return
 	}
 
-	for _, file := range files {
-		if err := os.RemoveAll(file); err != nil {
-			fmt.Println(err)
-		}
-	}
+	removeDir(roleFolder)
 
-	if err := os.Remove(roleFolder); err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println("Role '", searchRoleName, "' files purged.")
+	fmt.Println("Role", searchRoleName, "files purged.")
 }

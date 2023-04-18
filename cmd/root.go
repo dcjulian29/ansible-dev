@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -137,6 +138,33 @@ func executeExternalProgram(program string, params ...string) {
 	cmd.Stdout = os.Stdout
 
 	if err := cmd.Run(); err != nil {
+		fmt.Println(err)
+		ensureWorkingDirectoryAndExit()
+	}
+}
+
+func removeDir(dirPath string) {
+	files, err := filepath.Glob(filepath.Join(dirPath, "*"))
+	if err != nil {
+		fmt.Println(err)
+		ensureWorkingDirectoryAndExit()
+	}
+
+	for _, file := range files {
+		if err := os.RemoveAll(file); err != nil {
+			fmt.Println(err)
+			ensureWorkingDirectoryAndExit()
+		}
+	}
+
+	if err := os.Remove(dirPath); err != nil {
+		fmt.Println(err)
+		ensureWorkingDirectoryAndExit()
+	}
+}
+
+func removeFile(filePath string) {
+	if err := os.Remove(filePath); err != nil {
 		fmt.Println(err)
 		ensureWorkingDirectoryAndExit()
 	}
