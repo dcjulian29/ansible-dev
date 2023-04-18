@@ -101,6 +101,15 @@ func fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return info.IsDir()
+}
+
 func ensureDir(dirPath string) error {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		if err := os.MkdirAll(dirPath, 0755); err != nil {
@@ -132,7 +141,7 @@ func ensureWorkingDirectoryAndExit() {
 }
 
 func executeExternalProgram(program string, params ...string) {
-	cmd := exec.Command("ansible-galaxy", params...)
+	cmd := exec.Command(program, params...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -144,28 +153,32 @@ func executeExternalProgram(program string, params ...string) {
 }
 
 func removeDir(dirPath string) {
-	files, err := filepath.Glob(filepath.Join(dirPath, "*"))
-	if err != nil {
-		fmt.Println(err)
-		ensureWorkingDirectoryAndExit()
-	}
+	if dirExists(dirPath) {
+		files, err := filepath.Glob(filepath.Join(dirPath, "*"))
+		if err != nil {
+			fmt.Println(err)
+			ensureWorkingDirectoryAndExit()
+		}
 
-	for _, file := range files {
-		if err := os.RemoveAll(file); err != nil {
+		for _, file := range files {
+			if err := os.RemoveAll(file); err != nil {
+				fmt.Println(err)
+				ensureWorkingDirectoryAndExit()
+			}
+		}
+
+		if err := os.Remove(dirPath); err != nil {
 			fmt.Println(err)
 			ensureWorkingDirectoryAndExit()
 		}
 	}
-
-	if err := os.Remove(dirPath); err != nil {
-		fmt.Println(err)
-		ensureWorkingDirectoryAndExit()
-	}
 }
 
 func removeFile(filePath string) {
-	if err := os.Remove(filePath); err != nil {
-		fmt.Println(err)
-		ensureWorkingDirectoryAndExit()
+	if fileExists(filePath) {
+		if err := os.Remove(filePath); err != nil {
+			fmt.Println(err)
+			ensureWorkingDirectoryAndExit()
+		}
 	}
 }

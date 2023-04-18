@@ -13,3 +13,6 @@ Vagrantfile
 
 requirements.yml
 ansible.log
+
+.vagrant/
+.tmp/
