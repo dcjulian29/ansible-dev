@@ -17,15 +17,24 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	pingCmd = &cobra.Command{
-		Use:   "ping",
-		Short: "Ping the Ansible development vagrant environment",
-		Long:  "Ping the Ansible development vagrant environment",
+	shellCommand string
+
+	shellCmd = &cobra.Command{
+		Use:   "shell [flags] -- <command>",
+		Short: "Execute shell command in the Ansible development vagrant environment",
+		Long:  "Execute shell command in the Ansible development vagrant environment",
+		Args: func(cmd *cobra.Command, args []string) error {
+			shellCommand = strings.Join(args, " ")
+
+			return nil
+		},
+		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(shellCommand) == 0 {
 				cmd.Help()
@@ -42,7 +51,15 @@ var (
 				limit = "vagrant"
 			}
 
-			executeExternalProgram("ansible", fmt.Sprintf("-i hosts.ini %s", limit), "-m ping")
+			param := []string{
+				"-i hosts.ini",
+				fmt.Sprintf("-l %s", limit),
+				"-m shell",
+				fmt.Sprintf("-a '%s'", shellCommand),
+				"all",
+			}
+
+			executeExternalProgram("ansible", param...)
 		},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			ensureAnsibleDirectory()
@@ -55,11 +72,11 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(pingCmd)
+	rootCmd.AddCommand(shellCmd)
 
-	pingCmd.Flags().BoolP("development", "d", true, "only ping the development VMs")
-	pingCmd.Flags().BoolP("provision", "p", false, "only ping the provision VM")
-	pingCmd.Flags().BoolP("test", "t", false, "only ping the test VMs")
+	shellCmd.Flags().BoolP("development", "d", true, "only execute on the development VMs")
+	shellCmd.Flags().BoolP("provision", "p", false, "only execute on the provision VM")
+	shellCmd.Flags().BoolP("test", "t", false, "only execute on the test VMs")
 
-	pingCmd.MarkFlagsMutuallyExclusive("development", "provision", "test")
+	shellCmd.MarkFlagsMutuallyExclusive("development", "provision", "test")
 }
