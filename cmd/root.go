@@ -202,3 +202,10 @@ func Color(colorString string) func(...interface{}) string {
 
 	return sprint
 }
+
+func ensureVagrantfile() {
+	if !fileExists("Vagrantfile") {
+		fmt.Println(Fatal("ERROR: Can't find the Vagrantfile!"))
+		ensureWorkingDirectoryAndExit()
+	}
+}
