@@ -26,8 +26,9 @@ var (
 	force bool
 
 	initCmd = &cobra.Command{
-		Use:   "init",
-		Short: "Initialize an Ansible development vagrant environment",
+		Use:     "init",
+		Aliases: []string{"initialize"},
+		Short:   "Initialize an Ansible development vagrant environment",
 		Long: `Initialize an development environment for Ansible development by creating the folder
 structure and generating the needed files to quickly set up a virtual environment
 ready for development. Vagrant can be used to manage the environment and connect
@@ -130,16 +131,19 @@ func inventory_file() {
 
 	defer file.Close()
 
-	content := []byte(`[ansibledev]
-debian
-rocky
+	content := []byte(`[provisiontest]
+debian ansible_host=192.168.57.5
+
+[ansibledev]
+debian ansible_host=192.168.57.5
+rocky ansible_host=192.168.57.6
 
 [vagrant]
-debian
-rocky
-ubuntu
-alma
-fedora
+debian ansible_host=192.168.57.5
+rocky ansible_host=192.168.57.6
+alma ansible_host=192.168.57.7
+fedora ansible_host=192.168.57.8
+ubuntu ansible_host=192.168.57.9
 `)
 
 	if _, err = file.Write(content); err != nil {
@@ -189,21 +193,21 @@ func vagrant_file() {
   end
 
   config.vm.define "alma" do |c|
-    c.vm.box = "generic/alma9"
+    c.vm.box = "almalinux/9"
     c.vm.hostname = "alma.test"
     c.vm.network "private_network", ip: "192.168.57.7"
     c.vm.network :forwarded_port, guest: 22, host: 8007, id: 'ssh'
   end
 
   config.vm.define "fedora" do |c|
-    c.vm.box = "generic/fedora36"
+    c.vm.box = "fedora/38-cloud-base"
     c.vm.hostname = "fedora.test"
     c.vm.network "private_network", ip: "192.168.57.8"
     c.vm.network :forwarded_port, guest: 22, host: 8008, id: 'ssh'
   end
 
   config.vm.define "ubuntu" do |c|
-    c.vm.box = "generic/ubuntu2204"
+    c.vm.box = "ubuntu/jammy64"
     c.vm.hostname = "ubuntu.test"
     c.vm.network "private_network", ip: "192.168.57.9"
     c.vm.network :forwarded_port, guest: 22, host: 8009, id: 'ssh'
