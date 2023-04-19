@@ -144,6 +144,12 @@ rocky ansible_host=192.168.57.6
 alma ansible_host=192.168.57.7
 fedora ansible_host=192.168.57.8
 ubuntu ansible_host=192.168.57.9
+
+[all:vars]
+ansible_user=vagrant
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o CheckHostIP=no'
+ansible_port=22
+ansible_ssh_private_key_file=~/.ssh/insecure_private_key
 `)
 
 	if _, err = file.Write(content); err != nil {
