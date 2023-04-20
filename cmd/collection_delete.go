@@ -16,43 +16,24 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-var roleRemoveCmd = &cobra.Command{
-	Use:   "remove <role>",
-	Short: "Remove Ansible role from requirements.yml",
-	Long:  "Remove Ansible role from requirements.yml",
+var collectionDeleteCmd = &cobra.Command{
+	Use:   "delete <collection>",
+	Short: "Remove Ansible collection files from the development environment",
+	Long:  "Remove Ansible collection files from the development environment",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
 			return
 		}
 
-		var changed []Role
+		collection := args[0]
+		folder, _ := collectionFolder(collection)
 
-		role := args[0]
-		requirements, _ := readRequirementsFile()
-
-		for i, r := range requirements.Roles {
-			if r.Name == role {
-				changed = append(requirements.Roles[:i], requirements.Roles[i+1:]...)
-			}
-		}
-
-		if len(changed) > 0 {
-			requirements.Roles = changed
-			writeRequirementsFile(requirements)
-			fmt.Println(Info("Role '%s' removed.", role))
-			return
-		}
-
-		fmt.Println(Warn("WARN: Role '%s' not present.", role))
-
-		if r, _ := cmd.Flags().GetBool("purge"); r {
-			remove_role(role)
+		if collectionFolderExists(collection) {
+			removeDir(folder)
 		}
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -64,7 +45,5 @@ var roleRemoveCmd = &cobra.Command{
 }
 
 func init() {
-	roleCmd.AddCommand(roleRemoveCmd)
-
-	roleRemoveCmd.Flags().Bool("purge", false, "remove role files too")
+	collectionCmd.AddCommand(collectionDeleteCmd)
 }

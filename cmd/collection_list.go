@@ -22,19 +22,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var roleListCmd = &cobra.Command{
+var collectionListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Show list of Ansible roles in the development environment",
-	Long:  "Show list of Ansible roles in the development environment",
+	Short: "Show list of Ansible collections in the development environment",
+	Long:  "Show list of Ansible collections in the development environment",
 	Run: func(cmd *cobra.Command, args []string) {
 		required, _ := cmd.Flags().GetBool("requirements")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 
 		if required {
 			ensureRequirementsFile()
-			list_required_roles()
+			list_required_collections()
 		} else {
-			list_all_roles(verbose)
+			list_all_collections(verbose)
 		}
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -46,26 +46,26 @@ var roleListCmd = &cobra.Command{
 }
 
 func init() {
-	roleCmd.AddCommand(roleListCmd)
+	collectionCmd.AddCommand(collectionListCmd)
 
-	roleListCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
-	roleListCmd.Flags().BoolP("requirements", "r", false, "show only roles from requirements.yml")
+	collectionListCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
+	collectionListCmd.Flags().BoolP("requirements", "r", false, "show only collections from requirements.yml")
 }
 
-func list_all_roles(verbose bool) {
-	param := []string{"role", "list"}
+func list_all_collections(verbose bool) {
+	param := []string{"collection", "list"}
 
 	if verbose {
-		param = []string{"role", "list", "-v"}
+		param = []string{"collection", "list", "-v"}
 	}
 
 	executeExternalProgram("ansible-galaxy", param...)
 }
 
-func list_required_roles() {
+func list_required_collections() {
 	requirements, _ := readRequirementsFile()
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Source", "Version"})
+	table.SetHeader([]string{"Name", "Source", "Type", "Version"})
 	table.SetAutoWrapText(false)
 	table.SetAutoFormatHeaders(true)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
@@ -78,8 +78,8 @@ func list_required_roles() {
 	table.SetTablePadding("\t")
 	table.SetNoWhiteSpace(true)
 
-	for _, r := range requirements.Roles {
-		row := []string{r.Name, r.Source, r.Version}
+	for _, c := range requirements.Collections {
+		row := []string{c.Name, c.Source, c.Type, c.Version}
 		table.Append(row)
 	}
 

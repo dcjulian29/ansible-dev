@@ -21,10 +21,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var roleAddCmd = &cobra.Command{
-	Use:   "add <role>",
-	Short: "Add Ansible role to requirements.yml",
-	Long:  "Add Ansible role to requirements.yml",
+var collectionAddCmd = &cobra.Command{
+	Use:   "add <collection>",
+	Short: "Add Ansible collection to requirements.yml",
+	Long:  "Add Ansible collection to requirements.yml",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
@@ -37,7 +37,7 @@ var roleAddCmd = &cobra.Command{
 		version, _ := cmd.Flags().GetString("version")
 
 		if len(name) > 0 && len(source) == 0 {
-			source = name // Ansible Galaxy Role
+			source = name // Ansible Galaxy Collection
 		}
 
 		var requirements Requirements
@@ -46,17 +46,18 @@ var roleAddCmd = &cobra.Command{
 			requirements, _ = readRequirementsFile()
 		}
 
-		role := Role{
+		collection := Collection{
 			Name:    name,
 			Source:  source,
+			Type:    "galaxy",
 			Version: version,
 		}
 
-		requirements.Roles = append(requirements.Roles, role)
+		requirements.Collections = append(requirements.Collections, collection)
 
 		writeRequirementsFile(requirements)
 
-		fmt.Println(Info("Role '%s' added to requirements.yml but must be restored before use.", name))
+		fmt.Println(Info("Collection '%s' added to requirements.yml but must be restored before use.", name))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		ensureAnsibleDirectory()
@@ -67,8 +68,8 @@ var roleAddCmd = &cobra.Command{
 }
 
 func init() {
-	roleCmd.AddCommand(roleAddCmd)
+	collectionCmd.AddCommand(collectionAddCmd)
 
-	roleAddCmd.Flags().StringP("source", "s", "", "source of the role")
-	roleAddCmd.Flags().StringP("version", "v", "", "version of the role")
+	collectionAddCmd.Flags().StringP("source", "s", "", "source of the collection")
+	collectionAddCmd.Flags().StringP("version", "v", "", "version of the collection")
 }

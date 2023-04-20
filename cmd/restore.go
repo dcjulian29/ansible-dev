@@ -16,47 +16,26 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-var roleRemoveCmd = &cobra.Command{
-	Use:   "remove <role>",
-	Short: "Remove Ansible role from requirements.yml",
-	Long:  "Remove Ansible role from requirements.yml",
+var restoreCmd = &cobra.Command{
+	Use:   "restore",
+	Short: "Restore Ansible collections and roles from files, URLs or Ansible Galaxy",
+	Long:  "Restore Ansible collections and roles from files, URLs or Ansible Galaxy",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			cmd.Help()
-			return
+		verbose, _ := cmd.Flags().GetBool("verbose")
+		param := []string{"install", "-r", "requirements.yml"}
+
+		if verbose {
+			param = []string{"install", "-v", "-r", "requirements.yml"}
 		}
 
-		var changed []Role
-
-		role := args[0]
-		requirements, _ := readRequirementsFile()
-
-		for i, r := range requirements.Roles {
-			if r.Name == role {
-				changed = append(requirements.Roles[:i], requirements.Roles[i+1:]...)
-			}
-		}
-
-		if len(changed) > 0 {
-			requirements.Roles = changed
-			writeRequirementsFile(requirements)
-			fmt.Println(Info("Role '%s' removed.", role))
-			return
-		}
-
-		fmt.Println(Warn("WARN: Role '%s' not present.", role))
-
-		if r, _ := cmd.Flags().GetBool("purge"); r {
-			remove_role(role)
-		}
+		executeExternalProgram("ansible-galaxy", param...)
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		ensureAnsibleDirectory()
+		ensureRequirementsFile()
 	},
 	PostRun: func(cmd *cobra.Command, args []string) {
 		ensureWorkingDirectoryAndExit()
@@ -64,7 +43,7 @@ var roleRemoveCmd = &cobra.Command{
 }
 
 func init() {
-	roleCmd.AddCommand(roleRemoveCmd)
+	rootCmd.AddCommand(restoreCmd)
 
-	roleRemoveCmd.Flags().Bool("purge", false, "remove role files too")
+	restoreCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 }

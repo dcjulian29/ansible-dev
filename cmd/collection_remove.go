@@ -21,38 +21,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var roleRemoveCmd = &cobra.Command{
-	Use:   "remove <role>",
-	Short: "Remove Ansible role from requirements.yml",
-	Long:  "Remove Ansible role from requirements.yml",
+var collectionRemoveCmd = &cobra.Command{
+	Use:   "remove <collection>",
+	Short: "Remove Ansible collection from requirements.yml",
+	Long:  "Remove Ansible collection from requirements.yml",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
 			return
 		}
 
-		var changed []Role
+		var changed []Collection
 
-		role := args[0]
+		collection := args[0]
 		requirements, _ := readRequirementsFile()
 
-		for i, r := range requirements.Roles {
-			if r.Name == role {
-				changed = append(requirements.Roles[:i], requirements.Roles[i+1:]...)
+		for i, r := range requirements.Collections {
+			if r.Name == collection {
+				changed = append(requirements.Collections[:i], requirements.Collections[i+1:]...)
 			}
 		}
 
 		if len(changed) > 0 {
-			requirements.Roles = changed
+			requirements.Collections = changed
 			writeRequirementsFile(requirements)
-			fmt.Println(Info("Role '%s' removed.", role))
+			fmt.Println(Info("Collection '%s' removed.", collection))
 			return
 		}
 
-		fmt.Println(Warn("WARN: Role '%s' not present.", role))
+		fmt.Println(Warn("WARN: Collection '%s' not present.", collection))
 
 		if r, _ := cmd.Flags().GetBool("purge"); r {
-			remove_role(role)
+			remove_collection(collection)
 		}
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -64,7 +64,7 @@ var roleRemoveCmd = &cobra.Command{
 }
 
 func init() {
-	roleCmd.AddCommand(roleRemoveCmd)
+	collectionCmd.AddCommand(collectionRemoveCmd)
 
-	roleRemoveCmd.Flags().Bool("purge", false, "remove role files too")
+	collectionRemoveCmd.Flags().Bool("purge", false, "remove collection files too")
 }

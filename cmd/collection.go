@@ -23,21 +23,21 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-var roleCmd = &cobra.Command{
-	Use:     "role",
-	Aliases: []string{"roles"},
-	Short:   "Provide management of ansible roles in the development environment",
-	Long:    "Provide management of ansible roles in the development environment",
+var collectionCmd = &cobra.Command{
+	Use:     "collection",
+	Aliases: []string{"collections"},
+	Short:   "Provide management of ansible collections in the development environment",
+	Long:    "Provide management of ansible collections in the development environment",
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(roleCmd)
+	rootCmd.AddCommand(collectionCmd)
 }
 
-func roleFolder(role string) (string, error) {
+func collectionFolder(collection string) (string, error) {
 	ensureAnsibleDirectory()
 
 	cfg, err := ini.Load("ansible.cfg")
@@ -52,19 +52,19 @@ func roleFolder(role string) (string, error) {
 		return "", err
 	}
 
-	rolePath, err := section.GetKey("roles_path")
+	path, err := section.GetKey("collections_path")
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
 
-	folder := filepath.Join(rolePath.String(), role)
+	folder := filepath.Join(path.String(), collection)
 
 	return folder, nil
 }
 
-func roleFolderExists(role string) bool {
-	folder, err := roleFolder(role)
+func collectionFolderExists(collection string) bool {
+	folder, err := collectionFolder(collection)
 
 	if err != nil {
 		return false
@@ -73,13 +73,13 @@ func roleFolderExists(role string) bool {
 	return dirExists(folder)
 }
 
-func remove_role(role string) {
-	if !roleFolderExists(role) {
-		fmt.Println(Warn("WARN: Role '%s' folder not present.", role))
+func remove_collection(collection string) {
+	if !roleFolderExists(collection) {
+		fmt.Println(Warn("WARN: Collection '%s' folder not present.", collection))
 		return
 	}
 
-	folder, err := roleFolder(role)
+	folder, err := roleFolder(collection)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -92,11 +92,11 @@ func remove_role(role string) {
 	}
 
 	if len(files) == 0 {
-		fmt.Println(Warn("WARN: Role '%s' files not present.", role))
+		fmt.Println(Warn("WARN: Collection '%s' files not present.", collection))
 		return
 	}
 
 	removeDir(folder)
 
-	fmt.Println(Info("Role '%s' files were deleted.", role))
+	fmt.Println(Info("Collection '%s' files were deleted.", collection))
 }

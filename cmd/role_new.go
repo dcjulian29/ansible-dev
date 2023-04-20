@@ -21,39 +21,45 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var roleRemoveCmd = &cobra.Command{
-	Use:   "remove <role>",
-	Short: "Remove Ansible role from requirements.yml",
-	Long:  "Remove Ansible role from requirements.yml",
+var roleNewCmd = &cobra.Command{
+	Use:   "new <role>",
+	Short: "Create a new Ansible role in the development environment",
+	Long:  "Create a new Ansible role in the development environment",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
 			return
 		}
 
-		var changed []Role
-
 		role := args[0]
-		requirements, _ := readRequirementsFile()
+		force, _ := cmd.Flags().GetBool("force")
+		folder, _ := roleFolder(role)
 
-		for i, r := range requirements.Roles {
-			if r.Name == role {
-				changed = append(requirements.Roles[:i], requirements.Roles[i+1:]...)
+		if roleFolderExists(role) {
+			if !force {
+				fmt.Println(Fatal("Role exists! Use -force to replace."))
+				return
 			}
+
+			removeDir(folder)
 		}
 
-		if len(changed) > 0 {
-			requirements.Roles = changed
-			writeRequirementsFile(requirements)
-			fmt.Println(Info("Role '%s' removed.", role))
-			return
+		var param []string
+
+		verbose, _ := cmd.Flags().GetBool("verbose")
+
+		if verbose {
+			param = append(param, "-v")
 		}
 
-		fmt.Println(Warn("WARN: Role '%s' not present.", role))
-
-		if r, _ := cmd.Flags().GetBool("purge"); r {
-			remove_role(role)
+		if force {
+			param = append(param, "-f")
 		}
+
+		param = append(param, "init-path", folder)
+		param = append(param, "init", role)
+
+		executeExternalProgram("ansible-galaxy", param...)
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		ensureAnsibleDirectory()
@@ -64,7 +70,8 @@ var roleRemoveCmd = &cobra.Command{
 }
 
 func init() {
-	roleCmd.AddCommand(roleRemoveCmd)
+	roleCmd.AddCommand(roleNewCmd)
 
-	roleRemoveCmd.Flags().Bool("purge", false, "remove role files too")
+	roleNewCmd.Flags().BoolP("force", "f", false, "force overwriting an existing role")
+	roleNewCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 }
