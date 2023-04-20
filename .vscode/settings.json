@@ -7,6 +7,7 @@
     "GOPATH",
     "ldflags",
     "modifyvm",
+    "nfpms",
     "olekukonko",
     "szostok",
     "uartmode",
