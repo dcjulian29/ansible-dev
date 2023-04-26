@@ -14,23 +14,28 @@ builds:
       - -X go.szostok.io/version.version={{.Version}}
       - -X go.szostok.io/version.buildDate={{.Date}}
 archives:
-  - format: tar.gz
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
+  - files:
+      - LICENSE
+    builds_info:
+      group: root
+      owner: root
+      mode: 0755
+    name_template: "dcjulian29.apps.ansible-dev_{{ .Version }}_{{ .Os }}"
     format_overrides:
-    - goos: windows
-      format: zip
+      - format: zip
+        goos: windows
 nfpms:
-  - id: ansible-dev
+  - id: dcjulian29.apps.ansible-dev
     package_name: ansible-dev
     homepage: https://github.com/dcjulian29/ansible-dev/
     maintainer: Julian Easterling <julian@julianscorner.com>
     license: Apache 2.0
+    dependencies:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - virtualbox
+      - vagrant
     description: |-
       ansible-dev integrates with Vagrant to enable users to define, develop, and test Ansible
       playbooks, roles, and modules. It allows users to define and manage infrastructure resources and
@@ -42,9 +47,33 @@ nfpms:
       create, manage, and provision infrastructure resources like virtual machines, load balancers, and
       databases.
     formats:
-      - rpm
       - deb
+      - rpm
     bindir: /usr/local/bin
+chocolateys:
+  - name: dcjulian29.apps.ansible-dev
+    authors: Julian Easterling <julian@julianscorner.com>
+    project_url: https://github.com/dcjulian29/ansible-dev/
+    copyright: 2023 Julian Easterling julian@julianscorner.com
+    license_url: https://github.com/dcjulian29/ansible-dev/blob/main/LICENSE
+    require_license_acceptance: false
+    bug_tracker_url: https://github.com/dcjulian29/ansible-dev/issues
+    description: |
+      ansible-dev integrates with Vagrant to enable users to define, develop, and test Ansible
+      playbooks, roles, and modules. It allows users to define and manage infrastructure resources and
+      uses the providers automation engine to provision and run plays.
+
+      By utilizing Ansible's playbooks, roles, and modules, developers can automate the deployment of
+      software applications across multiple hosting providers, reducing the time and effort required to
+      manage complex infrastructure environments. These playbooks, roles, and modules enable developers to
+      create, manage, and provision infrastructure resources like virtual machines, load balancers, and
+      databases.
+    dependencies:
+      - id: docker-desktop
+      - id: vagrant
+    api_key: "{{ .Env.CHOCO_API_KEY}}"
+    source_repo: "https://www.myget.org/F/dcjulian29-chocolatey/"
+    skip_publish: false
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -55,4 +84,3 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
