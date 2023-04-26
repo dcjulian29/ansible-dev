@@ -27,8 +27,7 @@ archives:
       - format: zip
         goos: windows
 nfpms:
-  - id: dcjulian29.apps.ansible-dev
-    package_name: ansible-dev
+  - package_name: dcjulian29.apps.ansible-dev
     homepage: https://github.com/dcjulian29/ansible-dev/
     maintainer: Julian Easterling <julian@julianscorner.com>
     license: Apache 2.0
