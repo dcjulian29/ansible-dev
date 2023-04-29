@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -44,20 +45,18 @@ var roleNewCmd = &cobra.Command{
 			removeDir(folder)
 		}
 
-		var param []string
+		param := []string{
+			"init",
+			role,
+			"--init-path",
+			strings.ReplaceAll(rootRoleFolder(), "\\", "/"),
+		}
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
 
 		if verbose {
-			param = append(param, "-v")
+			param = append(param, "--verbose")
 		}
-
-		if force {
-			param = append(param, "-f")
-		}
-
-		param = append(param, "init-path", folder)
-		param = append(param, "init", role)
 
 		executeExternalProgram("ansible-galaxy", param...)
 	},
