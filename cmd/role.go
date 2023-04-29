@@ -37,28 +37,32 @@ func init() {
 	rootCmd.AddCommand(roleCmd)
 }
 
-func roleFolder(role string) (string, error) {
+func rootRoleFolder() string {
 	ensureAnsibleDirectory()
 
 	cfg, err := ini.Load("ansible.cfg")
 	if err != nil {
 		fmt.Println(err)
-		return "", err
+		return ""
 	}
 
 	section, err := cfg.GetSection("defaults")
 	if err != nil {
 		fmt.Println(err)
-		return "", err
+		return ""
 	}
 
 	rolePath, err := section.GetKey("roles_path")
 	if err != nil {
 		fmt.Println(err)
-		return "", err
+		return ""
 	}
 
-	folder := filepath.Join(rolePath.String(), role)
+	return rolePath.String()
+}
+
+func roleFolder(role string) (string, error) {
+	folder := filepath.Join(rootRoleFolder(), role)
 
 	return folder, nil
 }
