@@ -63,6 +63,7 @@ var (
 			playFromFlags.Step, _ = cmd.Flags().GetBool("step")
 			playFromFlags.Verbose, _ = cmd.Flags().GetBool("verbose")
 
+			generate_play(playFromFlags.Name)
 			execute_play(playFromFlags)
 		},
 		PreRun: func(cmd *cobra.Command, args []string) {
