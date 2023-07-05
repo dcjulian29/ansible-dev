@@ -95,7 +95,7 @@ func vagrant_up(cmd *cobra.Command) {
 		count := 0
 
 		for !found {
-			found = ping(name)
+			found = ping(addr)
 
 			if found {
 				fmt.Println(Green(" [Found]"))
