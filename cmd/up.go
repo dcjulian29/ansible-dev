@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -138,50 +139,51 @@ func vagrant_up(cmd *cobra.Command) {
 }
 
 func ping(address string) bool {
-	addr, err := net.ResolveIPAddr("ip", address)
+	ip, err := net.ResolveIPAddr("ip", address)
 	if err != nil {
 		fmt.Println(err)
 		return false
 	}
 
-	conn, err := net.DialIP("ip4:icmp", nil, addr)
+	addr := net.UDPAddr{IP: net.ParseIP(ip.String())}
+
+	conn, err := icmp.ListenPacket("udp4", "0.0.0.0")
 	if err != nil {
+		fmt.Println(err)
 		return false
 	}
 
 	defer conn.Close()
 
-	msg := append([]byte{8, 0, 0, 0, 0, 13, 0, 37}, (make([]byte, 48))...)
-
-	sum := 0
-	for i := 0; i < len(msg)-1; i += 2 {
-		sum += int(msg[i])*256 + int(msg[i+1])
+	msg := &icmp.Message{
+		Type: ipv4.ICMPTypeEcho,
+		Code: 0,
+		Body: &icmp.Echo{
+			ID:   os.Getpid() & 0xffff,
+			Seq:  0,
+			Data: []byte("ping"),
+		},
 	}
 
-	sum = (sum >> 16) + (sum & 0xffff)
-	sum += sum >> 16
+	wb, _ := msg.Marshal(nil)
+	conn.WriteTo(wb, &addr)
+	rb := make([]byte, 1500)
+	conn.SetReadDeadline(time.Now().Add(time.Second))
+	n, peer, err := conn.ReadFrom(rb)
 
-	checksum := uint16(^sum)
-
-	msg[2] = byte(checksum >> 8)
-	msg[3] = byte(checksum & 0xff)
-
-	if _, err = conn.Write(msg); err != nil {
-		return false
+	if err == nil {
+		rm, err := icmp.ParseMessage(1, rb[:n])
+		if err == nil {
+			if rm.Type == ipv4.ICMPTypeEchoReply {
+				echoReply, ok := msg.Body.(*icmp.Echo)
+				if ok {
+					if peer.(*net.UDPAddr).IP.String() == address && echoReply.Seq == 0 {
+						return true
+					}
+				}
+			}
+		}
 	}
 
-	r := make([]byte, 1024)
-
-	conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
-
-	if _, err = conn.Read(r); err != nil {
-		return false
-	}
-
-	rm, err := icmp.ParseMessage(ipv4.ICMPTypeEchoReply.Protocol(), r)
-	if err != nil {
-		return false
-	}
-
-	return rm.Code == 0
+	return false
 }
