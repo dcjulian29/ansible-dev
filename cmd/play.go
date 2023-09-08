@@ -135,11 +135,13 @@ func execute_play(play Play) {
 	var param []string
 
 	if len(play.Limit) > 0 {
-		param = append(param, fmt.Sprintf("--limit %s", play.Limit))
+		param = append(param, "--limit")
+		param = append(param, play.Limit)
 	}
 
 	if len(play.Tags) > 0 {
-		param = append(param, fmt.Sprintf("--tags %s", strings.Join(play.Tags, ",")))
+		param = append(param, "--tags")
+		param = append(param, strings.Join(play.Tags, ","))
 	}
 
 	if play.FlushCache {
