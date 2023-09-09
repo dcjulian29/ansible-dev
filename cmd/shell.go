@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -52,10 +51,10 @@ var (
 			}
 
 			param := []string{
-				"-i hosts.ini",
-				fmt.Sprintf("-l %s", limit),
-				"-m shell",
-				fmt.Sprintf("-a '%s'", shellCommand),
+				"-i", "hosts.ini",
+				"-l", limit,
+				"-m", "shell",
+				"-a", shellCommand,
 				"all",
 			}
 

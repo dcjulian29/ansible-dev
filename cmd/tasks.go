@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -41,7 +40,8 @@ var (
 			tags, _ := cmd.Flags().GetStringSlice("tags")
 
 			if len(tags) > 0 {
-				param = append(param, fmt.Sprintf("--tags %s", strings.Join(tags, ",")))
+				param = append(param, "--tags")
+				param = append(param, strings.Join(tags, ","))
 			}
 
 			param = append(param, "--list-tasks", ".tmp/play.yml")

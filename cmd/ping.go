@@ -16,8 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -42,7 +40,7 @@ var (
 				limit = "vagrant"
 			}
 
-			executeExternalProgram("ansible", fmt.Sprintf("-i hosts.ini %s", limit), "-m ping")
+			executeExternalProgram("ansible", "-i", "hosts.ini", limit, "-m", "ping")
 		},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			ensureAnsibleDirectory()
