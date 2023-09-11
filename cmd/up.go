@@ -18,13 +18,11 @@ package cmd
 import (
 	"fmt"
 	"net"
-	"os"
+	"os/exec"
+	"runtime"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
 	"gopkg.in/ini.v1"
 )
 
@@ -139,50 +137,22 @@ func vagrant_up(cmd *cobra.Command) {
 }
 
 func ping(address string) bool {
-	ip, err := net.ResolveIPAddr("ip", address)
+	addr, err := net.ResolveIPAddr("ip", address)
 	if err != nil {
 		fmt.Println(err)
 		return false
 	}
 
-	addr := net.UDPAddr{IP: net.ParseIP(ip.String())}
+	var output []byte
 
-	conn, err := icmp.ListenPacket("udp4", "0.0.0.0")
-	if err != nil {
-		fmt.Println(err)
-		return false
+	if runtime.GOOS == "windows" {
+		output, _ = exec.Command("ping", "-w", "1000", "-n", "1", addr.String()).CombinedOutput()
+	} else {
+		output, _ = exec.Command("ping", "-c", "1", addr.String()).CombinedOutput()
 	}
 
-	defer conn.Close()
-
-	msg := &icmp.Message{
-		Type: ipv4.ICMPTypeEcho,
-		Code: 0,
-		Body: &icmp.Echo{
-			ID:   os.Getpid() & 0xffff,
-			Seq:  0,
-			Data: []byte("ping"),
-		},
-	}
-
-	wb, _ := msg.Marshal(nil)
-	conn.WriteTo(wb, &addr)
-	rb := make([]byte, 1500)
-	conn.SetReadDeadline(time.Now().Add(time.Second))
-	n, peer, err := conn.ReadFrom(rb)
-
-	if err == nil {
-		rm, err := icmp.ParseMessage(1, rb[:n])
-		if err == nil {
-			if rm.Type == ipv4.ICMPTypeEchoReply {
-				echoReply, ok := msg.Body.(*icmp.Echo)
-				if ok {
-					if peer.(*net.UDPAddr).IP.String() == address && echoReply.Seq == 0 {
-						return true
-					}
-				}
-			}
-		}
+	if strings.Contains(string(output[:]), "TTL") {
+		return true
 	}
 
 	return false
