@@ -25,11 +25,19 @@ var restoreCmd = &cobra.Command{
 	Long:  "Restore Ansible collections and roles from files, URLs or Ansible Galaxy",
 	Run: func(cmd *cobra.Command, args []string) {
 		verbose, _ := cmd.Flags().GetBool("verbose")
-		param := []string{"install", "-r", "requirements.yml"}
+		force, _ := cmd.Flags().GetBool("force")
+
+		param := []string{"install"}
 
 		if verbose {
-			param = []string{"install", "-v", "-r", "requirements.yml"}
+			param = append(param, "-v")
 		}
+
+		if force {
+			param = append(param, "--force")
+		}
+
+		param = append(param, "-r", "requirements.yml")
 
 		executeExternalProgram("ansible-galaxy", param...)
 	},
@@ -45,5 +53,6 @@ var restoreCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(restoreCmd)
 
+	restoreCmd.Flags().Bool("force", false, "force overwriting existing roles or collections")
 	restoreCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 }
