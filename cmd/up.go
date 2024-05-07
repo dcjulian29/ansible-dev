@@ -110,7 +110,7 @@ func vagrant_up(cmd *cobra.Command) {
 		}
 	}
 
-	verbose, _ := cmd.Flags().GetBool("base")
+	verbose, _ := cmd.Flags().GetBool("verbose")
 
 	if r, _ := cmd.Flags().GetBool("base"); r {
 		fmt.Println("\nApplying the base role with the minimal tag...")
