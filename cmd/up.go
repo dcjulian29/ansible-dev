@@ -126,7 +126,7 @@ func vagrant_up(cmd *cobra.Command) {
 	role, _ := cmd.Flags().GetString("role")
 
 	if len(role) > 0 {
-		fmt.Printf("\nApplying the '%s' role..", role)
+		fmt.Printf("\nApplying the '%s' role...\n", role)
 		generate_play(role)
 		execute_play(Play{
 			Name:    role,
