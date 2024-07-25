@@ -16,10 +16,13 @@ limitations under the License.
 package cmd
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -208,4 +211,55 @@ func ensureVagrantfile() {
 		fmt.Println(Fatal("ERROR: Can't find the Vagrantfile!"))
 		ensureWorkingDirectoryAndExit()
 	}
+}
+
+func fileHash(filePath string) string {
+	hash := sha256.New()
+
+	sourceFile, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println(Fatal("error opening file:", err))
+	}
+
+	defer sourceFile.Close()
+
+	if _, err := io.Copy(hash, sourceFile); err != nil {
+		fmt.Println(Fatal("error calculating hash:", err))
+	}
+
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+func scanDirectory(dir_path string, ignore []string) ([]string, []string) {
+	folders := []string{}
+	files := []string{}
+
+	filepath.Walk(dir_path, func(path string, f os.FileInfo, err error) error {
+		_continue := false
+
+		for _, i := range ignore {
+			if strings.Contains(path, i) {
+				_continue = true
+			}
+		}
+
+		if !_continue {
+			f, err = os.Stat(path)
+			if err != nil {
+				fmt.Println(Fatal("ERROR: Scanning '" + dir_path + "!"))
+			}
+
+			f_mode := f.Mode()
+
+			if f_mode.IsDir() {
+				folders = append(folders, path)
+			} else if f_mode.IsRegular() {
+				files = append(files, path)
+			}
+		}
+
+		return nil
+	})
+
+	return folders, files
 }

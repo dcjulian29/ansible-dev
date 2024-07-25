@@ -10,9 +10,13 @@
     "ldflags",
     "modifyvm",
     "nfpms",
+    "nodiff",
     "olekukonko",
     "szostok",
+    "theckman",
     "uartmode",
-    "vmsvga"
+    "vmsvga",
+    "winmergeu",
+    "yacspin"
   ]
 }
