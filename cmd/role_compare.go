@@ -72,7 +72,7 @@ var roleCompareCmd = &cobra.Command{
 
 				fmt.Println("'" + source + "' --> '" + dest + "'")
 
-				ignored := []string{"\\.git\\", "\\.github\\"}
+				ignored := []string{"\\.git\\", "\\.github\\", ".galaxy_install_info"}
 
 				_, workingFile := scanDirectory(workingEntry, ignored)
 				_, repoFile := scanDirectory(repoEntry, ignored)
@@ -83,10 +83,6 @@ var roleCompareCmd = &cobra.Command{
 				}
 
 				for _, f := range workingFile {
-					if strings.Contains(f, ".galaxy_install_info") {
-						continue
-					}
-
 					f2 := strings.Replace(f, workingEntry, repoEntry, 1)
 					h1 := fileHash(f)
 					h2 := fileHash(f2)
