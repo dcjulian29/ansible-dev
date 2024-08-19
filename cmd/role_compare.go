@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -30,12 +31,20 @@ var roleCompareCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		checksum, _ := cmd.Flags().GetBool("checksum")
 		nodiff, _ := cmd.Flags().GetBool("no-diff")
+		sep := string(os.PathSeparator)
 
 		pwd, _ := os.Getwd()
 
-		userFolder := strings.Replace(os.Getenv("USERPROFILE"), "\\", "\\", -1)
-		repoFolder := strings.Replace(os.Getenv("ANSIBLE_ROLES"), "\\", "\\", -1)
-		workingFolder := strings.Replace(pwd+"\\"+rootRoleFolder(), "\\./", "\\", -1)
+		var userFolder string
+
+		if runtime.GOOS == "windows" {
+			userFolder = strings.Replace(os.Getenv("USERPROFILE"), "\\", sep, -1)
+		} else {
+			userFolder = strings.Replace(os.Getenv("HOME"), "\\", sep, -1)
+		}
+
+		repoFolder := strings.Replace(os.Getenv("ANSIBLE_ROLES"), "\\", sep, -1)
+		workingFolder := strings.Replace(pwd+sep+rootRoleFolder(), "/./", sep, -1)
 
 		if len(repoFolder) == 0 {
 			fmt.Println(fmt.Errorf("the Ansible development role directory is not defined"))
@@ -50,13 +59,14 @@ var roleCompareCmd = &cobra.Command{
 		}
 
 		for _, e := range entries {
-			workingEntry := workingFolder + "\\" + e.Name()
+			workingEntry := workingFolder + sep + e.Name()
+			workingEntry = strings.Replace(workingEntry, "/./", "/", -1)
 
 			if err != nil {
 				fmt.Println("error in accessing working folder:", err)
 			}
 
-			repoEntry := strings.Replace(workingEntry, workingFolder, repoFolder, 1)
+			repoEntry := strings.Replace(workingFolder, workingFolder, repoFolder+sep+e.Name(), 1)
 
 			if !dirExists(repoEntry) {
 				repoEntry = strings.Replace(repoEntry, "dcjulian29.", "", 1)
@@ -72,7 +82,7 @@ var roleCompareCmd = &cobra.Command{
 
 				fmt.Println("'" + source + "' --> '" + dest + "'")
 
-				ignored := []string{"\\.git\\", "\\.github\\", ".galaxy_install_info"}
+				ignored := []string{".git", ".github", ".galaxy_install_info"}
 
 				_, workingFile := scanDirectory(workingEntry, ignored)
 				_, repoFile := scanDirectory(repoEntry, ignored)
@@ -84,8 +94,16 @@ var roleCompareCmd = &cobra.Command{
 
 				for _, f := range workingFile {
 					f2 := strings.Replace(f, workingEntry, repoEntry, 1)
-					h1 := fileHash(f)
-					h2 := fileHash(f2)
+
+					var h1, h2 string
+
+					if fileExists(f) {
+						h1 = fileHash(f)
+					}
+
+					if fileExists(f2) {
+						h2 = fileHash(f2)
+					}
 
 					if h1 != h2 {
 						compare = true
@@ -93,16 +111,24 @@ var roleCompareCmd = &cobra.Command{
 
 					if checksum {
 						if h1 == h2 {
-							fmt.Printf(Green("%s: %s == %s\n"), strings.Replace(f, workingEntry+"\\", "", 1), h1, h2)
+							fmt.Printf(Green("%s: %s == %s\n"), strings.Replace(f, workingEntry+sep, "", 1), h1, h2)
 						} else {
-							fmt.Printf(Red("%s: %s != %s\n"), strings.Replace(f, workingEntry+"\\", "", 1), h1, h2)
+							fmt.Printf(Red("%s: %s != %s\n"), strings.Replace(f, workingEntry+sep, "", 1), h1, h2)
 						}
 					}
 				}
 
 				if compare && !nodiff {
-					program := "C:\\Program Files\\WinMerge\\winmergeu.exe"
-					params := []string{"/r", "/m", "Full", "/u", "/f", "AnsibleRoles", repoEntry, workingEntry}
+					var program string
+					var params []string
+
+					if runtime.GOOS == "windows" {
+						program = "C:\\Program Files\\WinMerge\\winmergeu.exe"
+						params = []string{"/r", "/m", "Full", "/u", "/f", "AnsibleRoles", repoEntry, workingEntry}
+					} else {
+						program = "/usr/bin/meld"
+						params = []string{repoEntry, workingEntry}
+					}
 
 					executeExternalProgram(program, params...)
 				}
