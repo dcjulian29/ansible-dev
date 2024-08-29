@@ -60,7 +60,8 @@ var roleCompareCmd = &cobra.Command{
 
 		for _, e := range entries {
 			workingEntry := workingFolder + sep + e.Name()
-			workingEntry = strings.Replace(workingEntry, "/./", "/", -1)
+			workingEntry = strings.Replace(workingEntry, "/./", sep, -1)
+			workingEntry = strings.Replace(workingEntry, "\\./", sep, -1)
 
 			if err != nil {
 				fmt.Println("error in accessing working folder:", err)
