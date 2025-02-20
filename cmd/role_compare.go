@@ -100,10 +100,18 @@ var roleCompareCmd = &cobra.Command{
 
 					if fileExists(f) {
 						h1 = fileHash(f)
+					} else {
+						if checksum {
+							fmt.Printf(Red("%s: ==> %s\n"), strings.Replace(f, workingEntry+sep, "", 1))
+						}
 					}
 
 					if fileExists(f2) {
 						h2 = fileHash(f2)
+					} else {
+						if checksum {
+							fmt.Printf(Red("%s: <== %s\n"), strings.Replace(f2, workingEntry+sep, "", 1))
+						}
 					}
 
 					if h1 != h2 {

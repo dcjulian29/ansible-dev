@@ -5,6 +5,7 @@
     "chocolateys",
     "cpus",
     "dcjulian",
+    "goarch",
     "GOBIN",
     "GOPATH",
     "ldflags",
