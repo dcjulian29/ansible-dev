@@ -25,7 +25,7 @@ archives:
       mode: 0755
     name_template: "dcjulian29.apps.ansible-dev_{{ .Version }}_{{ .Os }}"
     format_overrides:
-      - format: zip
+      - formats: [ 'zip' ]
         goos: windows
 nfpms:
   - package_name: dcjulian29.apps.ansible-dev
@@ -79,7 +79,7 @@ chocolateys:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
