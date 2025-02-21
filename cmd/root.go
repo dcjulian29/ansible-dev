@@ -244,12 +244,12 @@ func scanDirectory(dir_path string, ignore []string) ([]string, []string) {
 		}
 
 		if !_continue {
-			f, err = os.Stat(path)
+			s, err := os.Stat(path)
 			if err != nil {
 				fmt.Println(Fatal("ERROR: Scanning '" + dir_path + "!"))
 			}
 
-			f_mode := f.Mode()
+			f_mode := s.Mode()
 
 			if f_mode.IsDir() {
 				folders = append(folders, path)
