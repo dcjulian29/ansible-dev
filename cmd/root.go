@@ -246,7 +246,7 @@ func scanDirectory(dir_path string, ignore []string) ([]string, []string) {
 		if !_continue {
 			s, err := os.Stat(path)
 			if err != nil {
-				fmt.Println(Fatal("ERROR: Scanning '" + dir_path + "!"))
+				fmt.Println(Fatal("error scanning '" + dir_path + "'"))
 			}
 
 			f_mode := s.Mode()
