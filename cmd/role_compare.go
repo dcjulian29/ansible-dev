@@ -45,6 +45,7 @@ var roleCompareCmd = &cobra.Command{
 
 		repoFolder := strings.Replace(os.Getenv("ANSIBLE_ROLES"), "\\", sep, -1)
 		workingFolder := strings.Replace(pwd+sep+rootRoleFolder(), "/./", sep, -1)
+		workingFolder = strings.Replace(workingFolder, "\\./", sep, -1)
 
 		if len(repoFolder) == 0 {
 			fmt.Println(fmt.Errorf("the Ansible development role directory is not defined"))
@@ -56,6 +57,10 @@ var roleCompareCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(err)
 			return
+		}
+
+		if len(entries) == 0 {
+			fmt.Println(fmt.Errorf("No files found in '" + workingFolder + "'"))
 		}
 
 		for _, e := range entries {
@@ -80,10 +85,9 @@ var roleCompareCmd = &cobra.Command{
 			if len(repoEntry) > 0 {
 				source := strings.Replace(workingEntry, userFolder, "~", 1)
 				dest := strings.Replace(repoEntry, userFolder, "~", 1)
+				ignored := []string{"\\.git", "\\.github", ".galaxy_install_info"}
 
 				fmt.Println("'" + source + "' --> '" + dest + "'")
-
-				ignored := []string{".git", ".github", ".galaxy_install_info"}
 
 				_, workingFile := scanDirectory(workingEntry, ignored)
 				_, repoFile := scanDirectory(repoEntry, ignored)
