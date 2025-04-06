@@ -107,7 +107,7 @@ host_key_checking           = false
 inventory                   = ./hosts.ini
 log_path                    = ./ansible.log
 roles_path                  = ./roles
-stdout_callback             = community.general.yaml
+callback_result_format      = yaml
 verbosity                   = 1
 
 [diff]
