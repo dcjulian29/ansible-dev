@@ -47,10 +47,6 @@ var (
 
 			sectionName := "ansibledev"
 
-			if r, _ := cmd.Flags().GetBool("provision"); r {
-				sectionName = "provisiontest"
-			}
-
 			if r, _ := cmd.Flags().GetBool("test"); r {
 				sectionName = "vagrant"
 			}
@@ -80,16 +76,15 @@ func init() {
 	rootCmd.AddCommand(playCmd)
 
 	playCmd.Flags().BoolP("development", "d", true, "only play the role on the development VMs")
-	playCmd.Flags().BoolP("provision", "p", false, "only play the role on the provision VM")
 	playCmd.Flags().BoolP("test", "t", false, "only play the role on the test VMs")
 
-	playCmd.MarkFlagsMutuallyExclusive("development", "provision", "test")
+	playCmd.MarkFlagsMutuallyExclusive("development", "test")
 
 	playCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 	playCmd.Flags().Bool("ask-vault-password", false, "ask for vault password")
 	playCmd.Flags().Bool("ask-become-password", false, "ask for privilege escalation password")
 	playCmd.Flags().Bool("flush-cache", false, "clear the fact cache for every host in inventory")
-	playCmd.Flags().Bool("step", false, "one-step-at-a-time: confirm each task before running")
+	playCmd.Flags().BoolP("step", "s", false, "one-step-at-a-time: confirm each task before running")
 
 	playCmd.Flags().StringSlice("tags", []string{}, "only plays and task tagged with these values")
 }

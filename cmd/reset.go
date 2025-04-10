@@ -45,12 +45,11 @@ func init() {
 	rootCmd.AddCommand(resetCmd)
 
 	resetCmd.Flags().BoolP("development", "d", true, "only start and provision the development VMs")
-	resetCmd.Flags().BoolP("provision", "p", false, "only start and provision the provision VM")
 	resetCmd.Flags().BoolP("test", "t", false, "only start and provision the test VMs")
 	resetCmd.Flags().Bool("base", true, "provision the VMs with the base role minimal tag")
 	resetCmd.Flags().String("role", "", "provision the VMs with the specified role")
 	resetCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 	resetCmd.Flags().Bool("no-recreate", false, "do not recreate the VMs")
 
-	resetCmd.MarkFlagsMutuallyExclusive("development", "provision", "test")
+	resetCmd.MarkFlagsMutuallyExclusive("development", "test")
 }

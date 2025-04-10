@@ -42,10 +42,6 @@ var (
 
 			limit := "ansibledev"
 
-			if r, _ := cmd.Flags().GetBool("provision"); r {
-				limit = "provisiontest"
-			}
-
 			if r, _ := cmd.Flags().GetBool("test"); r {
 				limit = "vagrant"
 			}
@@ -74,8 +70,7 @@ func init() {
 	rootCmd.AddCommand(shellCmd)
 
 	shellCmd.Flags().BoolP("development", "d", true, "only execute on the development VMs")
-	shellCmd.Flags().BoolP("provision", "p", false, "only execute on the provision VM")
 	shellCmd.Flags().BoolP("test", "t", false, "only execute on the test VMs")
 
-	shellCmd.MarkFlagsMutuallyExclusive("development", "provision", "test")
+	shellCmd.MarkFlagsMutuallyExclusive("development", "test")
 }

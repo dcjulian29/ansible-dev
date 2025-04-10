@@ -32,10 +32,6 @@ var (
 
 			limit := "ansibledev"
 
-			if r, _ := cmd.Flags().GetBool("provision"); r {
-				limit = "provisiontest"
-			}
-
 			if r, _ := cmd.Flags().GetBool("test"); r {
 				limit = "vagrant"
 			}
@@ -56,8 +52,7 @@ func init() {
 	rootCmd.AddCommand(pingCmd)
 
 	pingCmd.Flags().BoolP("development", "d", true, "only ping the development VMs")
-	pingCmd.Flags().BoolP("provision", "p", false, "only ping the provision VM")
 	pingCmd.Flags().BoolP("test", "t", false, "only ping the test VMs")
 
-	pingCmd.MarkFlagsMutuallyExclusive("development", "provision", "test")
+	pingCmd.MarkFlagsMutuallyExclusive("development", "test")
 }

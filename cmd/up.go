@@ -48,7 +48,6 @@ func init() {
 	rootCmd.AddCommand(upCmd)
 
 	upCmd.Flags().BoolP("development", "d", true, "only start and provision the development VMs")
-	upCmd.Flags().BoolP("provision", "p", false, "only start and provision the provision VM")
 	upCmd.Flags().BoolP("test", "t", false, "only start and provision the test VMs")
 	upCmd.Flags().Bool("base", true, "provision the VMs with the base role minimal tag")
 	upCmd.Flags().String("role", "", "provision the VMs with the specified role")
@@ -65,10 +64,6 @@ func vagrant_up(cmd *cobra.Command) {
 	}
 
 	sectionName := "ansibledev"
-
-	if r, _ := cmd.Flags().GetBool("provision"); r {
-		sectionName = "provisiontest"
-	}
 
 	if r, _ := cmd.Flags().GetBool("test"); r {
 		sectionName = "vagrant"
