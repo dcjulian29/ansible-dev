@@ -8,6 +8,7 @@
     "goarch",
     "GOBIN",
     "GOPATH",
+    "ioapic",
     "ldflags",
     "modifyvm",
     "nfpms",

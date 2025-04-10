@@ -52,7 +52,7 @@ func init_env() {
 		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
 			fmt.Println("Creating development environment folder...")
 			if err := os.MkdirAll(folderPath, 0755); err != nil {
-				fmt.Println("Unable to create development environment folder!")
+				fmt.Println("unable to create development environment folder")
 				os.Exit(1)
 			}
 		}
@@ -61,7 +61,7 @@ func init_env() {
 	}
 
 	if fileExists("ansible.cfg") && !force {
-		fmt.Println("ERROR: The folder for the ansible development environment already contains an Ansible context and force was not provided.")
+		fmt.Println("folder for the ansible environment already contains a context and force was not provided")
 		ensureWorkingDirectoryAndExit()
 	}
 
@@ -90,10 +90,7 @@ func ansible_cfg() {
 
 	file, err := os.Create("ansible.cfg")
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	defer file.Close()
 
@@ -115,8 +112,7 @@ always                      = true
 `)
 
 	if _, err = file.Write(content); err != nil {
-		fmt.Println(err)
-		return
+		cobra.CheckErr(err)
 	}
 }
 
@@ -124,26 +120,16 @@ func inventory_file() {
 	fmt.Println("    ...   hosts.ini")
 	file, err := os.Create("hosts.ini")
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	defer file.Close()
 
-	content := []byte(`[provisiontest]
+	content := []byte(`[ansibledev]
 debian ansible_host=192.168.57.5
-
-[ansibledev]
-debian ansible_host=192.168.57.5
-rocky ansible_host=192.168.57.6
 
 [vagrant]
 debian ansible_host=192.168.57.5
 rocky ansible_host=192.168.57.6
-alma ansible_host=192.168.57.7
-fedora ansible_host=192.168.57.8
-ubuntu ansible_host=192.168.57.9
 
 [all:vars]
 ansible_user=vagrant
@@ -153,8 +139,7 @@ ansible_ssh_private_key_file=~/.ssh/insecure_private_key
 `)
 
 	if _, err = file.Write(content); err != nil {
-		fmt.Println(err)
-		return
+		cobra.CheckErr(err)
 	}
 }
 
@@ -162,69 +147,46 @@ func vagrant_file() {
 	fmt.Println("    ...   Vagrantfile")
 	file, err := os.Create("Vagrantfile")
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	defer file.Close()
 
 	content := []byte(`Vagrant.configure("2") do |config|
   config.ssh.insert_key = false
-  config.ssh.extra_args = "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.network :forwarded_port, guest: 22, host: 2220, id: "ssh", disabled: true
+  config.vm.provision "ping", type: "shell", inline: "ping -c 1 192.168.57.1", run: "always"
+  config.ssh.extra_args = "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"
 
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
-    vb.memory = 2048
+    vb.memory = 4096
     vb.cpus = 2
     vb.check_guest_additions = false
     vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
     vb.customize [ "modifyvm", :id, "--graphicscontroller", "vmsvga"]
+    vb.customize [ "modifyvm", :id, "--nestedpaging", "on"]
+    vb.customize [ "modifyvm", :id, "--largepages", "on"]
+    vb.customize [ "modifyvm", :id, "--ioapic", "on"]
   end
 
   config.vm.define "debian" do |c|
     c.vm.box = "debian/bullseye64"
-    c.vm.hostname = "debian.test"
     c.vm.network "private_network", ip: "192.168.57.5"
     c.vm.network :forwarded_port, guest: 22, host: 8005, id: 'ssh'
   end
 
   config.vm.define "rocky" do |c|
     c.vm.box = "rockylinux/9"
-    c.vm.hostname = "rocky.test"
     c.vm.network "private_network", ip: "192.168.57.6"
     c.vm.network :forwarded_port, guest: 22, host: 8006, id: 'ssh'
-  end
-
-  config.vm.define "alma" do |c|
-    c.vm.box = "almalinux/9"
-    c.vm.hostname = "alma.test"
-    c.vm.network "private_network", ip: "192.168.57.7"
-    c.vm.network :forwarded_port, guest: 22, host: 8007, id: 'ssh'
-  end
-
-  config.vm.define "fedora" do |c|
-    c.vm.box = "fedora/38-cloud-base"
-    c.vm.hostname = "fedora.test"
-    c.vm.network "private_network", ip: "192.168.57.8"
-    c.vm.network :forwarded_port, guest: 22, host: 8008, id: 'ssh'
-  end
-
-  config.vm.define "ubuntu" do |c|
-    c.vm.box = "ubuntu/jammy64"
-    c.vm.hostname = "ubuntu.test"
-    c.vm.network "private_network", ip: "192.168.57.9"
-    c.vm.network :forwarded_port, guest: 22, host: 8009, id: 'ssh'
   end
 
 end
 `)
 
 	if _, err = file.Write(content); err != nil {
-		fmt.Println(err)
-		return
+		cobra.CheckErr(err)
 	}
 }
 
@@ -232,31 +194,26 @@ func ansible_lint() {
 	fmt.Println("    ...   .ansible-lint")
 	file, err := os.Create(".ansible-lint")
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	defer file.Close()
 
-	content := []byte(`warn_list:
+	content := []byte(`skip_list:
+  - var-naming[no-role-prefix]
+
+warn_list:
   - internal-error
   - no-handler
   - experimental
 
 kinds:
-  - roles: "roles/"
   - playbook: "playbooks/*.{yml,yaml}"
-  - tasks: "**/tasks/*.{yml,yaml}"
-  - vars: "**/vars/*.{yml,yaml}"
-  - meta: "**/meta/main.yml"
   - yaml: "**/*.{yml,yaml}"
 
 verbosity: 1
 `)
 
 	if _, err = file.Write(content); err != nil {
-		fmt.Println(err)
-		return
+		cobra.CheckErr(err)
 	}
 }
