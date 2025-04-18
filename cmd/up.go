@@ -53,7 +53,7 @@ func init() {
 	upCmd.Flags().String("role", "", "provision the VMs with the specified role")
 	upCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 
-	upCmd.MarkFlagsMutuallyExclusive("development", "provision", "test")
+	upCmd.MarkFlagsMutuallyExclusive("development", "test")
 }
 
 func vagrant_up(cmd *cobra.Command) {
