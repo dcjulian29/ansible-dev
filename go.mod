@@ -1,7 +1,8 @@
 module github.com/dcjulian29/ansible-dev
 
-go 1.23
-toolchain go1.24.1
+go 1.23.0
+
+toolchain go1.24.2
 
 require (
 	github.com/olekukonko/tablewriter v0.0.5
