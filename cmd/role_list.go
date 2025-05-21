@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/spf13/cobra"
 )
 
@@ -64,19 +65,7 @@ func list_all_roles(verbose bool) {
 
 func list_required_roles() {
 	requirements, _ := readRequirementsFile()
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Source", "Version"})
-	table.SetAutoWrapText(false)
-	table.SetAutoFormatHeaders(true)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator(" ")
-	table.SetRowSeparator("")
-	table.SetHeaderLine(false)
-	table.SetBorder(false)
-	table.SetTablePadding("\t")
-	table.SetNoWhiteSpace(true)
+	table := tablewriter.NewTable(os.Stdout, tablewriter.WithTrimSpace(tw.Off))
 
 	for _, r := range requirements.Roles {
 		row := []string{r.Name, r.Source, r.Version}
