@@ -85,7 +85,7 @@ var roleCompareCmd = &cobra.Command{
 			if len(repoEntry) > 0 {
 				source := strings.Replace(workingEntry, userFolder, "~", 1)
 				dest := strings.Replace(repoEntry, userFolder, "~", 1)
-				ignored := []string{"\\.git", "\\.github", ".galaxy_install_info"}
+				ignored := []string{"\\.git", "\\.github", ".galaxy_install_info", ".ansible"}
 
 				fmt.Println("'" + source + "' --> '" + dest + "'")
 
