@@ -6,7 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/olekukonko/tablewriter v1.1.2
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	go.szostok.io/version v1.2.0
 	gopkg.in/ini.v1 v1.67.0
