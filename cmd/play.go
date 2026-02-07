@@ -89,7 +89,15 @@ func generate_play(roleName string) {
 
 	defer file.Close()
 
-	content := "---\n- hosts: all\n  any_errors_fatal: true\n  become: true\n  roles:\n"
+	content := `---
+- name: Test Ansible Role
+  hosts: all
+  any_errors_fatal: true
+	become: true
+
+  roles:
+`
+
 	content = fmt.Sprintf("%s%s", content, fmt.Sprintf("    - %s\n", roleName))
 
 	if _, err = file.WriteString(content); err != nil {
