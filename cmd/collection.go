@@ -16,11 +16,7 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-	"path/filepath"
-
 	"github.com/spf13/cobra"
-	"gopkg.in/ini.v1"
 )
 
 var collectionCmd = &cobra.Command{
@@ -38,68 +34,4 @@ var collectionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(collectionCmd)
-}
-
-func collectionFolder(collection string) (string, error) {
-	ensureAnsibleDirectory()
-
-	cfg, err := ini.Load("ansible.cfg")
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
-
-	section, err := cfg.GetSection("defaults")
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
-
-	path, err := section.GetKey("collections_path")
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
-
-	folder := filepath.Join(path.String(), collection)
-
-	return folder, nil
-}
-
-func collectionFolderExists(collection string) bool {
-	folder, err := collectionFolder(collection)
-
-	if err != nil {
-		return false
-	}
-
-	return dirExists(folder)
-}
-
-func remove_collection(collection string) {
-	if !roleFolderExists(collection) {
-		fmt.Println(Warn("WARN: Collection '%s' folder not present.", collection))
-		return
-	}
-
-	folder, err := roleFolder(collection)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	files, err := filepath.Glob(filepath.Join(folder, "*"))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	if len(files) == 0 {
-		fmt.Println(Warn("WARN: Collection '%s' files not present.", collection))
-		return
-	}
-
-	removeDir(folder)
-
-	fmt.Println(Info("Collection '%s' files were deleted.", collection))
 }
