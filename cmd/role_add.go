@@ -40,11 +40,7 @@ var roleAddCmd = &cobra.Command{
 			source = name // Ansible Galaxy Role
 		}
 
-		var requirements Requirements
-
-		if fileExists("requirements.yml") {
-			requirements, _ = readRequirementsFile()
-		}
+		requirements, _ := readRequirementsFile()
 
 		role := Role{
 			Name:    name,
