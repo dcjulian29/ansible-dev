@@ -56,31 +56,26 @@ func create_folder() {
 		os.Exit(1)
 	}
 
-	fmt.Println(Info("creating development environment folder..."))
-
 	ansible_cfg()
 	ansible_lint()
 
-	fmt.Println("    ...   collections/")
+	fmt.Println("  ...  collections/")
 	cobra.CheckErr(ensureDir("collections"))
 
 	group_vars()
 	host_vars()
-
-	fmt.Println("    ...   roles/")
-	cobra.CheckErr(ensureDir("roles"))
-
-	fmt.Println("    ...   playbooks/")
-	cobra.CheckErr(ensureDir("playbooks"))
-
 	inventory_file()
 	runbook()
+
+	fmt.Println("  ...  roles/")
+	cobra.CheckErr(ensureDir("roles"))
+
 	vagrant_file()
 
 }
 
 func ansible_cfg() {
-	fmt.Println("    ...   ansible.cfg")
+	fmt.Println("  ...  ansible.cfg")
 
 	file, err := os.Create("ansible.cfg")
 	cobra.CheckErr(err)
@@ -105,7 +100,7 @@ verbosity                   = 1
 }
 
 func ansible_lint() {
-	fmt.Println("    ...   .ansible-lint")
+	fmt.Println("  ...  .ansible-lint")
 	file, err := os.Create(".ansible-lint")
 	cobra.CheckErr(err)
 
@@ -137,10 +132,10 @@ verbosity: 1
 }
 
 func group_vars() {
-	fmt.Println("    ...   group_vars/")
+	fmt.Println("  ...  group_vars/")
 	cobra.CheckErr(ensureDir("group_vars/"))
 
-	fmt.Println("    ...   vagrant.yml")
+	fmt.Println("  ...    vagrant.yml")
 
 	file, err := os.Create("group_vars/vagrant.yml")
 	cobra.CheckErr(err)
@@ -155,10 +150,10 @@ func group_vars() {
 }
 
 func host_vars() {
-	fmt.Println("    ...   host_vars/")
+	fmt.Println("  ...  host_vars/")
 	cobra.CheckErr(ensureDir("host_vars"))
 
-	fmt.Println("    ...   debian.yml")
+	fmt.Println("  ...    debian.yml")
 
 	file, err := os.Create("host_vars/debian.yml")
 	cobra.CheckErr(err)
@@ -171,7 +166,7 @@ func host_vars() {
 		cobra.CheckErr(err)
 	}
 
-	fmt.Println("    ...   rocky.yml")
+	fmt.Println("  ...    rocky.yml")
 
 	file, err = os.Create("host_vars/rocky.yml")
 	cobra.CheckErr(err)
@@ -186,7 +181,7 @@ func host_vars() {
 }
 
 func inventory_file() {
-	fmt.Println("    ...   hosts.ini")
+	fmt.Println("  ...  hosts.ini")
 	file, err := os.Create("hosts.ini")
 	cobra.CheckErr(err)
 
@@ -209,7 +204,10 @@ ansible_ssh_private_key_file=~/.ssh/insecure_private_key
 }
 
 func runbook() {
-	fmt.Println("    ...   runbook.yml")
+	fmt.Println("  ...  playbooks/")
+	cobra.CheckErr(ensureDir("playbooks"))
+
+	fmt.Println("  ...    runbook.yml")
 	file, err := os.Create("playbooks/runbook.yml")
 	cobra.CheckErr(err)
 
@@ -243,7 +241,7 @@ func runbook() {
 }
 
 func vagrant_file() {
-	fmt.Println("    ...   Vagrantfile")
+	fmt.Println("  ...  Vagrantfile")
 	file, err := os.Create("Vagrantfile")
 	cobra.CheckErr(err)
 
