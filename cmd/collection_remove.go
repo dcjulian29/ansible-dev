@@ -45,15 +45,11 @@ var collectionRemoveCmd = &cobra.Command{
 		if len(changed) > 0 {
 			requirements.Collections = changed
 			writeRequirementsFile(requirements)
-			fmt.Println(Info("Collection '%s' removed.", collection))
+			fmt.Println(Info("collection '%s' removed from requirements.yml", collection))
 			return
 		}
 
-		fmt.Println(Warn("WARN: Collection '%s' not present.", collection))
-
-		if r, _ := cmd.Flags().GetBool("purge"); r {
-			remove_collection(collection)
-		}
+		fmt.Println(Warn("collection '%s' not present.", collection))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		ensureAnsibleDirectory()
@@ -62,6 +58,4 @@ var collectionRemoveCmd = &cobra.Command{
 
 func init() {
 	collectionCmd.AddCommand(collectionRemoveCmd)
-
-	collectionRemoveCmd.Flags().Bool("purge", false, "remove collection files too")
 }
