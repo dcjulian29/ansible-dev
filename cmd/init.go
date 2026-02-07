@@ -29,14 +29,11 @@ var (
 		Use:     "init",
 		Aliases: []string{"initialize"},
 		Short:   "Initialize an Ansible development vagrant environment",
-		Long: `Initialize an development environment for Ansible development by creating the folder
-structure and generating the needed files to quickly set up a virtual environment
-ready for development. Vagrant can be used to manage the environment and connect
-to troubleshoot and/or validate.`,
+		Long:    "Initialize an Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Initializing development environment...")
+			fmt.Println(Yellow("Initializing development environment..."))
 
-			init_env()
+			create_folder()
 		},
 	}
 )
@@ -47,42 +44,42 @@ func init() {
 	initCmd.Flags().BoolVarP(&force, "force", "f", false, "overwrite an existing development environment")
 }
 
-func init_env() {
+func create_folder() {
 	if workingDirectory != folderPath {
 		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-			fmt.Println("Creating development environment folder...")
+			fmt.Println(Fatal("creating development environment folder..."))
 			if err := os.MkdirAll(folderPath, 0755); err != nil {
-				fmt.Println("unable to create development environment folder")
-				os.Exit(1)
+				fmt.Println(Fatal("unable to create development environment folder"))
+				os.Exit(5)
 			}
 		}
-
-		ensureAnsibleDirectory()
 	}
 
 	if fileExists("ansible.cfg") && !force {
-		fmt.Println("folder for the ansible environment already contains a context and force was not provided")
-		ensureWorkingDirectoryAndExit()
+		fmt.Println(Fatal("folder for ansible development already exist and force was not provided"))
+		os.Exit(8)
 	}
+
+	ansible_cfg()
+	ansible_lint()
+	group_vars()
+	host_vars()
 
 	fmt.Println("    ...   roles/")
 	if err := ensureDir("roles"); err != nil {
-		fmt.Println(err)
-		ensureWorkingDirectoryAndExit()
+		fmt.Println(Fatal(err))
+		os.Exit(9)
 	}
 
 	fmt.Println("    ...   playbooks/")
 	if err := ensureDir("playbooks"); err != nil {
 		fmt.Println(err)
-		ensureWorkingDirectoryAndExit()
 	}
 
-	ansible_cfg()
-	ansible_lint()
 	inventory_file()
+	runbook()
 	vagrant_file()
 
-	ensureWorkingDirectoryAndExit()
 }
 
 func ansible_cfg() {
@@ -98,17 +95,139 @@ func ansible_cfg() {
 any_errors_fatal            = true
 collections_path            = ./collections
 duplicate_dict_key          = error
-error_on_undefined_vars     = true
-gathering                   = smart
-host_key_checking           = false
+interpreter_python          = auto_silent
 inventory                   = ./hosts.ini
 log_path                    = ./ansible.log
 roles_path                  = ./roles
 callback_result_format      = yaml
 verbosity                   = 1
+`)
 
-[diff]
-always                      = true
+	if _, err = file.Write(content); err != nil {
+		cobra.CheckErr(err)
+	}
+}
+
+func ansible_lint() {
+	fmt.Println("    ...   .ansible-lint")
+	file, err := os.Create(".ansible-lint")
+
+	cobra.CheckErr(err)
+
+	defer file.Close()
+
+	content := []byte(`---
+enable_list:
+  - args
+  - empty-string-compare
+  - no-log-password
+  - no-same-owner
+  - name[prefix]
+  - yaml
+exclude_paths:
+  - collections/
+  - roles/
+kinds:
+  - playbook: "playbooks/*.yml"
+profile: production
+skip_list:
+  - experimental
+  - var-naming[no-role-prefix]
+verbosity: 1
+
+`)
+
+	if _, err = file.Write(content); err != nil {
+		cobra.CheckErr(err)
+	}
+}
+
+func group_vars() {
+	fmt.Println("    ...   group_vars/")
+	if err := ensureDir("group_vars/"); err != nil {
+		fmt.Println(Fatal(err))
+		os.Exit(9)
+	}
+
+	fmt.Println("    ...   vagrant.yml")
+
+	file, err := os.Create("vagrant.yml")
+
+	cobra.CheckErr(err)
+
+	defer file.Close()
+
+	content := []byte("---\nname: value")
+
+	if _, err = file.Write(content); err != nil {
+		cobra.CheckErr(err)
+	}
+}
+
+func host_vars() {
+	fmt.Println("    ...   host_vars/")
+	if err := ensureDir("host_vars"); err != nil {
+		fmt.Println(Fatal(err))
+		os.Exit(9)
+	}
+
+	fmt.Println("    ...   debian.yml")
+
+	file, err := os.Create("debian.yml")
+
+	cobra.CheckErr(err)
+
+	defer file.Close()
+
+	content := []byte("---\nname: value")
+
+	if _, err = file.Write(content); err != nil {
+		cobra.CheckErr(err)
+	}
+
+	fmt.Println("    ...   rocky.yml")
+
+	file, err = os.Create("debian.yml")
+
+	cobra.CheckErr(err)
+
+	defer file.Close()
+
+	content = []byte("---\nname: value")
+
+	if _, err = file.Write(content); err != nil {
+		cobra.CheckErr(err)
+	}
+}
+
+func runbook() {
+	fmt.Println("    ...   runbook.yml")
+	file, err := os.Create("playbooks/runbook.yml")
+
+	cobra.CheckErr(err)
+
+	defer file.Close()
+
+	content := []byte(`---
+- name: Test Ansible Runbook
+  hosts: all
+  become: true
+  any_errors_fatal: true
+  gather_facts: true
+
+  handlers:
+#    - name: [Name of Handler]
+#      ...
+
+  tasks:
+#    - name: [Name of Task]
+#      ...
+
+#    - # Repeat as necessary
+
+  vars:
+    name: value
+#   variables needed for runbook
 `)
 
 	if _, err = file.Write(content); err != nil {
@@ -124,10 +243,7 @@ func inventory_file() {
 
 	defer file.Close()
 
-	content := []byte(`[ansibledev]
-debian ansible_host=192.168.57.5
-
-[vagrant]
+	content := []byte(`[vagrant]
 debian ansible_host=192.168.57.5
 rocky ansible_host=192.168.57.6
 
@@ -153,64 +269,32 @@ func vagrant_file() {
 
 	content := []byte(`Vagrant.configure("2") do |config|
   config.ssh.insert_key = false
-  config.vm.synced_folder ".", "/vagrant", disabled: true
-  config.vm.network :forwarded_port, guest: 22, host: 2220, id: "ssh", disabled: true
+  if Vagrant.has_plugin?("vagrant-vbguest")
+    config.vbguest.auto_update = false
+  end
+  config.vm.box_check_update = true
   config.vm.provision "ping", type: "shell", inline: "ping -c 1 192.168.57.1", run: "always"
-  config.ssh.extra_args = "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"
-
+  config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
-    vb.memory = 4096
     vb.cpus = 2
+    vb.memory = 4096
     vb.check_guest_additions = false
     vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
     vb.customize [ "modifyvm", :id, "--graphicscontroller", "vmsvga"]
-    vb.customize [ "modifyvm", :id, "--nestedpaging", "on"]
-    vb.customize [ "modifyvm", :id, "--largepages", "on"]
     vb.customize [ "modifyvm", :id, "--ioapic", "on"]
   end
-
   config.vm.define "debian" do |c|
-    c.vm.box = "debian/bullseye64"
+    c.vm.box = "debian/bookworm64"
+    c.vm.hostname = "debian.dev"
     c.vm.network "private_network", ip: "192.168.57.5"
-    c.vm.network :forwarded_port, guest: 22, host: 8005, id: 'ssh'
   end
-
   config.vm.define "rocky" do |c|
     c.vm.box = "rockylinux/9"
+    c.vm.hostname = "rocky.dev"
     c.vm.network "private_network", ip: "192.168.57.6"
-    c.vm.network :forwarded_port, guest: 22, host: 8006, id: 'ssh'
   end
-
 end
-`)
-
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
-	}
-}
-
-func ansible_lint() {
-	fmt.Println("    ...   .ansible-lint")
-	file, err := os.Create(".ansible-lint")
-
-	cobra.CheckErr(err)
-
-	defer file.Close()
-
-	content := []byte(`skip_list:
-  - var-naming[no-role-prefix]
-
-warn_list:
-  - internal-error
-  - no-handler
-  - experimental
-
-kinds:
-  - playbook: "playbooks/*.{yml,yaml}"
-  - yaml: "**/*.{yml,yaml}"
-
-verbosity: 1
 `)
 
 	if _, err = file.Write(content); err != nil {
