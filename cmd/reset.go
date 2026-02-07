@@ -35,9 +35,6 @@ var (
 			ensureAnsibleDirectory()
 			ensureVagrantfile()
 		},
-		PostRun: func(cmd *cobra.Command, args []string) {
-			ensureWorkingDirectoryAndExit()
-		},
 	}
 )
 

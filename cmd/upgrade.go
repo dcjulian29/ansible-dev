@@ -26,7 +26,10 @@ var (
 		Long:  "Updates the boxes that the Ansible development vagrant environment uses",
 		Run: func(cmd *cobra.Command, args []string) {
 			vagrant_upgrade()
-			ensureWorkingDirectoryAndExit()
+		},
+		PreRun: func(cmd *cobra.Command, args []string) {
+			ensureAnsibleDirectory()
+			ensureVagrantfile()
 		},
 	}
 )
@@ -36,9 +39,6 @@ func init() {
 }
 
 func vagrant_upgrade() {
-	ensureAnsibleDirectory()
-	ensureVagrantfile()
-
 	update := []string{"box", "update"}
 	prune := []string{"box", "prune", "--force", "--keep-active-boxes"}
 

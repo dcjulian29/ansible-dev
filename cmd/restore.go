@@ -45,9 +45,6 @@ var restoreCmd = &cobra.Command{
 		ensureAnsibleDirectory()
 		ensureRequirementsFile()
 	},
-	PostRun: func(cmd *cobra.Command, args []string) {
-		ensureWorkingDirectoryAndExit()
-	},
 }
 
 func init() {

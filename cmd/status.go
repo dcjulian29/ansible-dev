@@ -25,19 +25,15 @@ var (
 		Short: "Output status of the Ansible development vagrant environment",
 		Long:  "Output status of the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
-			vagrant_status()
-			ensureWorkingDirectoryAndExit()
+			executeExternalProgram("vagrant", "status")
+		},
+		PreRun: func(cmd *cobra.Command, args []string) {
+			ensureAnsibleDirectory()
+			ensureVagrantfile()
 		},
 	}
 )
 
 func init() {
 	rootCmd.AddCommand(statusCmd)
-}
-
-func vagrant_status() {
-	ensureAnsibleDirectory()
-	ensureVagrantfile()
-
-	executeExternalProgram("vagrant", "status")
 }

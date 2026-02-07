@@ -26,7 +26,10 @@ var (
 		Long:  "Destroy the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
 			vagrant_destroy()
-			ensureWorkingDirectoryAndExit()
+		},
+		PreRun: func(cmd *cobra.Command, args []string) {
+			ensureAnsibleDirectory()
+			ensureVagrantfile()
 		},
 	}
 )
@@ -36,9 +39,6 @@ func init() {
 }
 
 func vagrant_destroy() {
-	ensureAnsibleDirectory()
-	ensureVagrantfile()
-
 	param := []string{"destroy", "--force"}
 
 	executeExternalProgram("vagrant", param...)

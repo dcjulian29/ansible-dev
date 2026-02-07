@@ -26,10 +26,11 @@ var (
 		Short:   "Show inventory information for the Ansible development vagrant environment",
 		Long:    "Show inventory information for the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
+			executeExternalProgram("ansible-inventory", "--list", "--yaml")
+		},
+		PreRun: func(cmd *cobra.Command, args []string) {
 			ensureAnsibleDirectory()
 			ensureVagrantfile()
-			executeExternalProgram("ansible-inventory", "--list", "--yaml")
-			ensureWorkingDirectoryAndExit()
 		},
 	}
 )

@@ -50,9 +50,4 @@ var (
 
 func init() {
 	rootCmd.AddCommand(pingCmd)
-
-	pingCmd.Flags().BoolP("development", "d", true, "only ping the development VMs")
-	pingCmd.Flags().BoolP("test", "t", false, "only ping the test VMs")
-
-	pingCmd.MarkFlagsMutuallyExclusive("development", "test")
 }

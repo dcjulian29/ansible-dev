@@ -32,7 +32,6 @@ var collectionListCmd = &cobra.Command{
 		verbose, _ := cmd.Flags().GetBool("verbose")
 
 		if required {
-			ensureRequirementsFile()
 			list_required_collections()
 		} else {
 			list_all_collections(verbose)
@@ -40,9 +39,6 @@ var collectionListCmd = &cobra.Command{
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		ensureAnsibleDirectory()
-	},
-	PostRun: func(cmd *cobra.Command, args []string) {
-		ensureWorkingDirectoryAndExit()
 	},
 }
 

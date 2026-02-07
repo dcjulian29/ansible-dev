@@ -31,6 +31,9 @@ var collectionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
+	PreRun: func(cmd *cobra.Command, args []string) {
+		ensureAnsibleDirectory()
+	},
 }
 
 func init() {

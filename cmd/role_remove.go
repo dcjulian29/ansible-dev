@@ -58,9 +58,6 @@ var roleRemoveCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		ensureAnsibleDirectory()
 	},
-	PostRun: func(cmd *cobra.Command, args []string) {
-		ensureWorkingDirectoryAndExit()
-	},
 }
 
 func init() {
