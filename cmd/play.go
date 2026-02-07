@@ -100,11 +100,6 @@ func generate_play(roleName string) {
 func execute_play(play Play) {
 	var param []string
 
-	if len(play.Limit) > 0 {
-		param = append(param, "--limit")
-		param = append(param, play.Limit)
-	}
-
 	if len(play.Tags) > 0 {
 		param = append(param, "--tags")
 		param = append(param, strings.Join(play.Tags, ","))

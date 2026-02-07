@@ -25,18 +25,7 @@ var (
 		Short: "Ping the Ansible development vagrant environment",
 		Long:  "Ping the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(shellCommand) == 0 {
-				cmd.Help()
-				return
-			}
-
-			limit := "ansibledev"
-
-			if r, _ := cmd.Flags().GetBool("test"); r {
-				limit = "vagrant"
-			}
-
-			executeExternalProgram("ansible", "-i", "hosts.ini", limit, "-m", "ping")
+			executeExternalProgram("ansible", "-i", "hosts.ini", "-m", "ping")
 		},
 		PreRun: func(cmd *cobra.Command, args []string) {
 			ensureAnsibleDirectory()
