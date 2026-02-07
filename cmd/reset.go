@@ -25,10 +25,7 @@ var (
 		Short: "Reset the Ansible development vagrant environment",
 		Long:  "Reset the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
-			if r, _ := cmd.Flags().GetBool("no-recreate"); !r {
-				vagrant_destroy()
-			}
-
+			vagrant_destroy()
 			vagrant_up(cmd)
 		},
 		PreRun: func(cmd *cobra.Command, args []string) {
@@ -44,7 +41,4 @@ func init() {
 	resetCmd.Flags().Bool("base", true, "provision the VMs with the base role minimal tag")
 	resetCmd.Flags().String("role", "", "provision the VMs with the specified role")
 	resetCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
-	resetCmd.Flags().Bool("no-recreate", false, "do not recreate the VMs")
-
-	resetCmd.MarkFlagsMutuallyExclusive("development", "test")
 }
