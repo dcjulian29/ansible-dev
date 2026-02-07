@@ -93,7 +93,7 @@ func generate_play(roleName string) {
 - name: Test Ansible Role
   hosts: all
   any_errors_fatal: true
-	become: true
+  become: true
 
   roles:
 `
