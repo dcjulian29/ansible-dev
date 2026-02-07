@@ -133,22 +133,13 @@ func ensureDir(dirPath string) error {
 
 func ensureAnsibleDirectory() {
 	if workingDirectory != folderPath {
-		if err := os.Chdir(folderPath); err != nil {
-			fmt.Println("Unable to access development environment folder!")
-			os.Exit(1)
-		}
-	}
-}
-
-func ensureWorkingDirectoryAndExit() {
-	if workingDirectory != folderPath {
-		if err := os.Chdir(workingDirectory); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		cobra.CheckErr(os.Chdir(folderPath))
 	}
 
-	os.Exit(0)
+	if !fileExists("ansible.cfg") {
+		fmt.Println(Fatal("not an ansible development folder"))
+		os.Exit(1)
+	}
 }
 
 func executeExternalProgram(program string, params ...string) {
@@ -188,8 +179,8 @@ func Color(colorString string) func(...interface{}) string {
 
 func ensureVagrantfile() {
 	if !fileExists("Vagrantfile") {
-		fmt.Println(Fatal("ERROR: Can't find the Vagrantfile!"))
-		ensureWorkingDirectoryAndExit()
+		fmt.Println(Fatal("can't find the Vagrantfile"))
+		os.Exit(1)
 	}
 }
 
