@@ -33,9 +33,24 @@ var roleListCmd = &cobra.Command{
 
 		if required {
 			ensureRequirementsFile()
-			list_required_roles()
+
+			requirements, _ := readRequirementsFile()
+			table := tablewriter.NewTable(os.Stdout, tablewriter.WithTrimSpace(tw.Off))
+
+			for _, r := range requirements.Roles {
+				row := []string{r.Name, r.Source, r.Version}
+				table.Append(row)
+			}
+
+			table.Render()
 		} else {
-			list_all_roles(verbose)
+			param := []string{"role", "list"}
+
+			if verbose {
+				param = []string{"role", "list", "-v"}
+			}
+
+			executeExternalProgram("ansible-galaxy", param...)
 		}
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -48,26 +63,4 @@ func init() {
 
 	roleListCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 	roleListCmd.Flags().BoolP("requirements", "r", false, "show only roles from requirements.yml")
-}
-
-func list_all_roles(verbose bool) {
-	param := []string{"role", "list"}
-
-	if verbose {
-		param = []string{"role", "list", "-v"}
-	}
-
-	executeExternalProgram("ansible-galaxy", param...)
-}
-
-func list_required_roles() {
-	requirements, _ := readRequirementsFile()
-	table := tablewriter.NewTable(os.Stdout, tablewriter.WithTrimSpace(tw.Off))
-
-	for _, r := range requirements.Roles {
-		row := []string{r.Name, r.Source, r.Version}
-		table.Append(row)
-	}
-
-	table.Render()
 }
