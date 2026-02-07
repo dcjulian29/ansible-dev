@@ -20,6 +20,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
 
@@ -43,7 +44,7 @@ type Role struct {
 
 func ensureRequirementsFile() {
 	if !fileExists("requirements.yml") {
-		fmt.Println(Fatal("ERROR: Requirements file is not present!"))
+		fmt.Println(Fatal("requirements.yml file is not present!"))
 		return
 	}
 }
@@ -54,48 +55,31 @@ func readRequirementsFile() (Requirements, error) {
 	var requirements Requirements
 
 	file, err := os.Open("requirements.yml")
-	if err != nil {
-		fmt.Println(Fatal(err))
-		return requirements, err
-	}
+	cobra.CheckErr(err)
 
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
+	cobra.CheckErr(err)
 
-	if err != nil {
-		fmt.Println(Fatal(err))
-		return requirements, err
-	}
-
-	if err := yaml.Unmarshal(data, &requirements); err != nil {
-		fmt.Println(Fatal(err))
-		return requirements, err
-	}
+	cobra.CheckErr(yaml.Unmarshal(data, &requirements))
 
 	return requirements, nil
 }
 
 func writeRequirementsFile(requirements Requirements) error {
+	ensureRequirementsFile()
+
 	file, err := os.OpenFile("requirements.yml", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-	if err != nil {
-		fmt.Println(Fatal(err))
-		return err
-	}
+	cobra.CheckErr(err)
 
 	defer file.Close()
 
 	data, err := yaml.Marshal(requirements)
+	cobra.CheckErr(err)
 
-	if err != nil {
-		fmt.Println(Fatal(err))
-		return err
-	}
-
-	if _, err := file.Write(data); err != nil {
-		fmt.Println(Fatal(err))
-		return err
-	}
+	_, err = file.Write(data)
+	cobra.CheckErr(err)
 
 	return nil
 }

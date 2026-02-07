@@ -67,11 +67,6 @@ var roleCompareCmd = &cobra.Command{
 			workingEntry := workingFolder + sep + e.Name()
 			workingEntry = strings.Replace(workingEntry, "/./", sep, -1)
 			workingEntry = strings.Replace(workingEntry, "\\./", sep, -1)
-
-			if err != nil {
-				fmt.Println("error in accessing working folder:", err)
-			}
-
 			repoEntry := strings.Replace(workingFolder, workingFolder, repoFolder+sep+e.Name(), 1)
 
 			if !dirExists(repoEntry) {

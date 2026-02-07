@@ -38,27 +38,16 @@ func init() {
 }
 
 func rootRoleFolder() string {
-	ensureAnsibleDirectory()
-
 	cfg, err := ini.Load("ansible.cfg")
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
+	cobra.CheckErr(err)
 
 	section, err := cfg.GetSection("defaults")
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
+	cobra.CheckErr(err)
 
-	rolePath, err := section.GetKey("roles_path")
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
+	path, err := section.GetKey("roles_path")
+	cobra.CheckErr(err)
 
-	return rolePath.String()
+	return path.String()
 }
 
 func roleFolder(role string) (string, error) {
@@ -69,10 +58,7 @@ func roleFolder(role string) (string, error) {
 
 func roleFolderExists(role string) bool {
 	folder, err := roleFolder(role)
-
-	if err != nil {
-		return false
-	}
+	cobra.CheckErr(err)
 
 	return dirExists(folder)
 }
@@ -84,16 +70,10 @@ func remove_role(role string) {
 	}
 
 	folder, err := roleFolder(role)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	files, err := filepath.Glob(filepath.Join(folder, "*"))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	if len(files) == 0 {
 		fmt.Println(Warn("WARN: Role '%s' files not present.", role))

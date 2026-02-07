@@ -69,10 +69,7 @@ func Execute() {
 		),
 	)
 
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	cobra.CheckErr(rootCmd.Execute())
 }
 
 func init() {
@@ -160,41 +157,24 @@ func executeExternalProgram(program string, params ...string) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 
-	if err := cmd.Run(); err != nil {
-		fmt.Println(err)
-		ensureWorkingDirectoryAndExit()
-	}
+	cobra.CheckErr(cmd.Run())
 }
 
 func removeDir(dirPath string) {
 	if dirExists(dirPath) {
 		files, err := filepath.Glob(filepath.Join(dirPath, "*"))
-		if err != nil {
-			fmt.Println(err)
-			ensureWorkingDirectoryAndExit()
-		}
+		cobra.CheckErr(err)
 
 		for _, file := range files {
-			if err := os.RemoveAll(file); err != nil {
-				fmt.Println(err)
-				ensureWorkingDirectoryAndExit()
-			}
+			cobra.CheckErr(os.RemoveAll(file))
 		}
 
-		if err := os.Remove(dirPath); err != nil {
-			fmt.Println(err)
-			ensureWorkingDirectoryAndExit()
-		}
+		cobra.CheckErr(os.Remove(dirPath))
 	}
 }
 
 func removeFile(filePath string) {
-	if fileExists(filePath) {
-		if err := os.Remove(filePath); err != nil {
-			fmt.Println(err)
-			ensureWorkingDirectoryAndExit()
-		}
-	}
+	cobra.CheckErr(fileExists(filePath))
 }
 
 func Color(colorString string) func(...interface{}) string {
@@ -217,15 +197,12 @@ func fileHash(filePath string) string {
 	hash := sha256.New()
 
 	sourceFile, err := os.Open(filePath)
-	if err != nil {
-		fmt.Println(Fatal("error opening file:", err))
-	}
+	cobra.CheckErr(err)
 
 	defer sourceFile.Close()
 
-	if _, err := io.Copy(hash, sourceFile); err != nil {
-		fmt.Println(Fatal("error calculating hash:", err))
-	}
+	_, err = io.Copy(hash, sourceFile)
+	cobra.CheckErr(err)
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
@@ -245,9 +222,7 @@ func scanDirectory(dir_path string, ignore []string) ([]string, []string) {
 
 		if !_continue {
 			s, err := os.Stat(path)
-			if err != nil {
-				fmt.Println(Fatal("error scanning '" + dir_path + "'"))
-			}
+			cobra.CheckErr(err)
 
 			f_mode := s.Mode()
 

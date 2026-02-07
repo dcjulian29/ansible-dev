@@ -73,29 +73,19 @@ func init() {
 
 func ensurePlayFile() (*os.File, error) {
 	if !dirExists(".tmp") {
-		if err := os.Mkdir(".tmp", 0755); err != nil {
-			fmt.Println(err)
-			ensureWorkingDirectoryAndExit()
-		}
+		cobra.CheckErr(os.Mkdir(".tmp", 0755))
+	}
+
+	if fileExists(".tmp/play.yml") {
+		cobra.CheckErr(os.Remove(".tmp/play.yml"))
 	}
 
 	return os.Create(".tmp/play.yml")
 }
 
 func generate_play(roleName string) {
-	if fileExists(".tmp/play.yml") {
-		if err := os.Remove(".tmp/play.yml"); err != nil {
-			fmt.Println(err)
-			return
-		}
-	}
-
 	file, err := ensurePlayFile()
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	defer file.Close()
 
@@ -103,8 +93,7 @@ func generate_play(roleName string) {
 	content = fmt.Sprintf("%s%s", content, fmt.Sprintf("    - %s\n", roleName))
 
 	if _, err = file.WriteString(content); err != nil {
-		fmt.Println(err)
-		return
+		cobra.CheckErr(err)
 	}
 }
 

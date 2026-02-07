@@ -51,16 +51,10 @@ func init() {
 
 func vagrant_up(cmd *cobra.Command) {
 	inv, err := ini.Load("hosts.ini")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	section, err := inv.GetSection("vagrant")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cobra.CheckErr(err)
 
 	for _, vm := range section.KeyStrings() {
 		name := strings.Split(vm, " ")[0]
@@ -118,10 +112,7 @@ func vagrant_up(cmd *cobra.Command) {
 
 func ping(address string) bool {
 	addr, err := net.ResolveIPAddr("ip", address)
-	if err != nil {
-		fmt.Println(err)
-		return false
-	}
+	cobra.CheckErr(err)
 
 	var output []byte
 
