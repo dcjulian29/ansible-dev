@@ -48,19 +48,15 @@ var roleCompareCmd = &cobra.Command{
 		workingFolder = strings.Replace(workingFolder, "\\./", sep, -1)
 
 		if len(repoFolder) == 0 {
-			fmt.Println(fmt.Errorf("the Ansible development role directory is not defined"))
+			fmt.Println(Fatal("the Ansible roles directory is not defined in environment"))
 			return
 		}
 
 		entries, err := os.ReadDir(workingFolder)
-
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		cobra.CheckErr(err)
 
 		if len(entries) == 0 {
-			fmt.Println(fmt.Errorf("No files found in '" + workingFolder + "'"))
+			fmt.Println(Fatal("no files found in '" + workingFolder + "'"))
 		}
 
 		for _, e := range entries {
@@ -101,7 +97,7 @@ var roleCompareCmd = &cobra.Command{
 						h1 = fileHash(f)
 					} else {
 						if checksum {
-							fmt.Printf(Red("%s: ==> %s\n"), strings.Replace(f, workingEntry+sep, "", 1))
+							fmt.Printf(Yellow("%s: ==> %s\n"), strings.Replace(f, workingEntry+sep, "", 1))
 						}
 					}
 
@@ -109,7 +105,7 @@ var roleCompareCmd = &cobra.Command{
 						h2 = fileHash(f2)
 					} else {
 						if checksum {
-							fmt.Printf(Red("%s: <== %s\n"), strings.Replace(f2, workingEntry+sep, "", 1))
+							fmt.Printf(Yellow("%s: <== %s\n"), strings.Replace(f2, workingEntry+sep, "", 1))
 						}
 					}
 

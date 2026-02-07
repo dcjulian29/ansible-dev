@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -65,8 +66,8 @@ func roleFolderExists(role string) bool {
 
 func remove_role(role string) {
 	if !roleFolderExists(role) {
-		fmt.Println(Warn("WARN: Role '%s' folder not present.", role))
-		return
+		fmt.Println(Fatal("role '%s' folder not present.", role))
+		os.Exit(1)
 	}
 
 	folder, err := roleFolder(role)
@@ -76,11 +77,11 @@ func remove_role(role string) {
 	cobra.CheckErr(err)
 
 	if len(files) == 0 {
-		fmt.Println(Warn("WARN: Role '%s' files not present.", role))
-		return
+		fmt.Println(Fatal("role '%s' files not present.", role))
+		os.Exit(1)
 	}
 
 	removeDir(folder)
 
-	fmt.Println(Info("Role '%s' files were deleted.", role))
+	fmt.Println(Info("role '%s' files were deleted.", role))
 }

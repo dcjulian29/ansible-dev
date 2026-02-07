@@ -45,11 +45,11 @@ var roleRemoveCmd = &cobra.Command{
 		if len(changed) > 0 {
 			requirements.Roles = changed
 			writeRequirementsFile(requirements)
-			fmt.Println(Info("Role '%s' removed.", role))
+			fmt.Println(Info("role '%s' removed from requirements.yml", role))
 			return
 		}
 
-		fmt.Println(Warn("WARN: Role '%s' not present.", role))
+		fmt.Println(Fatal("role '%s' not present.", role))
 
 		if r, _ := cmd.Flags().GetBool("purge"); r {
 			remove_role(role)

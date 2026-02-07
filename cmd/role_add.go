@@ -56,7 +56,7 @@ var roleAddCmd = &cobra.Command{
 
 		writeRequirementsFile(requirements)
 
-		fmt.Println(Info("Role '%s' added to requirements.yml but must be restored before use.", name))
+		fmt.Println(Info("role '%s' added to requirements.yml but must be restored before use.", name))
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		ensureAnsibleDirectory()
