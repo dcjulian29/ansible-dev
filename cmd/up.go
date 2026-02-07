@@ -44,7 +44,7 @@ var (
 func init() {
 	rootCmd.AddCommand(upCmd)
 
-	upCmd.Flags().Bool("base", true, "provision the VMs with the base role minimal tag")
+	upCmd.Flags().Bool("base", false, "provision the VMs with the base role minimal tag")
 	upCmd.Flags().String("role", "", "provision the VMs with the specified role")
 	upCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 }
