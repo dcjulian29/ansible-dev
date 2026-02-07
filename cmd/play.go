@@ -131,6 +131,10 @@ func execute_play(play Play) {
 
 	param = append(param, ".tmp/play.yml")
 
+	if fileExists("ansible.log") {
+		cobra.CheckErr(os.Remove("ansible.log"))
+	}
+
 	if fileExists(".tmp/play.yml") {
 		executeExternalProgram("ansible-playbook", param...)
 	}

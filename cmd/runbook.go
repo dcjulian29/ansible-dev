@@ -16,6 +16,8 @@ limitations under the License.
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -72,6 +74,10 @@ func execute_runbook(play Play) {
 	}
 
 	param = append(param, "playbooks/runbook.yml")
+
+	if fileExists("ansible.log") {
+		cobra.CheckErr(os.Remove("ansible.log"))
+	}
 
 	executeExternalProgram("ansible-playbook", param...)
 }
