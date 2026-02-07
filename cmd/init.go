@@ -60,6 +60,10 @@ func create_folder() {
 
 	ansible_cfg()
 	ansible_lint()
+
+	fmt.Println("    ...   collections/")
+	cobra.CheckErr(ensureDir("collections"))
+
 	group_vars()
 	host_vars()
 
@@ -138,7 +142,7 @@ func group_vars() {
 
 	fmt.Println("    ...   vagrant.yml")
 
-	file, err := os.Create("vagrant.yml")
+	file, err := os.Create("group_vars/vagrant.yml")
 	cobra.CheckErr(err)
 
 	defer file.Close()
@@ -156,7 +160,7 @@ func host_vars() {
 
 	fmt.Println("    ...   debian.yml")
 
-	file, err := os.Create("debian.yml")
+	file, err := os.Create("host_vars/debian.yml")
 	cobra.CheckErr(err)
 
 	defer file.Close()
@@ -169,12 +173,35 @@ func host_vars() {
 
 	fmt.Println("    ...   rocky.yml")
 
-	file, err = os.Create("debian.yml")
+	file, err = os.Create("host_vars/rocky.yml")
 	cobra.CheckErr(err)
 
 	defer file.Close()
 
 	content = []byte("---\nname: value")
+
+	if _, err = file.Write(content); err != nil {
+		cobra.CheckErr(err)
+	}
+}
+
+func inventory_file() {
+	fmt.Println("    ...   hosts.ini")
+	file, err := os.Create("hosts.ini")
+	cobra.CheckErr(err)
+
+	defer file.Close()
+
+	content := []byte(`[vagrant]
+debian ansible_host=192.168.57.5
+rocky ansible_host=192.168.57.6
+
+[all:vars]
+ansible_user=vagrant
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o CheckHostIP=no'
+ansible_port=22
+ansible_ssh_private_key_file=~/.ssh/insecure_private_key
+`)
 
 	if _, err = file.Write(content); err != nil {
 		cobra.CheckErr(err)
@@ -208,29 +235,6 @@ func runbook() {
   vars:
     name: value
 #   variables needed for runbook
-`)
-
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
-	}
-}
-
-func inventory_file() {
-	fmt.Println("    ...   hosts.ini")
-	file, err := os.Create("hosts.ini")
-	cobra.CheckErr(err)
-
-	defer file.Close()
-
-	content := []byte(`[vagrant]
-debian ansible_host=192.168.57.5
-rocky ansible_host=192.168.57.6
-
-[all:vars]
-ansible_user=vagrant
-ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o CheckHostIP=no'
-ansible_port=22
-ansible_ssh_private_key_file=~/.ssh/insecure_private_key
 `)
 
 	if _, err = file.Write(content); err != nil {
