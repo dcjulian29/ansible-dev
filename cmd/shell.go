@@ -30,25 +30,16 @@ var (
 		Long:  "Execute shell command in the Ansible development vagrant environment",
 		Args: func(cmd *cobra.Command, args []string) error {
 			shellCommand = strings.Join(args, " ")
-
 			return nil
 		},
-		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(shellCommand) == 0 {
 				cmd.Help()
 				return
 			}
 
-			limit := "ansibledev"
-
-			if r, _ := cmd.Flags().GetBool("test"); r {
-				limit = "vagrant"
-			}
-
 			param := []string{
 				"-i", "hosts.ini",
-				"-l", limit,
 				"-m", "shell",
 				"-a", shellCommand,
 				"all",
@@ -65,9 +56,4 @@ var (
 
 func init() {
 	rootCmd.AddCommand(shellCmd)
-
-	shellCmd.Flags().BoolP("development", "d", true, "only execute on the development VMs")
-	shellCmd.Flags().BoolP("test", "t", false, "only execute on the test VMs")
-
-	shellCmd.MarkFlagsMutuallyExclusive("development", "test")
 }

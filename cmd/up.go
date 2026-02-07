@@ -44,13 +44,9 @@ var (
 func init() {
 	rootCmd.AddCommand(upCmd)
 
-	upCmd.Flags().BoolP("development", "d", true, "only start and provision the development VMs")
-	upCmd.Flags().BoolP("test", "t", false, "only start and provision the test VMs")
 	upCmd.Flags().Bool("base", true, "provision the VMs with the base role minimal tag")
 	upCmd.Flags().String("role", "", "provision the VMs with the specified role")
 	upCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
-
-	upCmd.MarkFlagsMutuallyExclusive("development", "test")
 }
 
 func vagrant_up(cmd *cobra.Command) {
@@ -60,13 +56,7 @@ func vagrant_up(cmd *cobra.Command) {
 		return
 	}
 
-	sectionName := "ansibledev"
-
-	if r, _ := cmd.Flags().GetBool("test"); r {
-		sectionName = "vagrant"
-	}
-
-	section, err := inv.GetSection(sectionName)
+	section, err := inv.GetSection("vagrant")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -76,11 +66,11 @@ func vagrant_up(cmd *cobra.Command) {
 		name := strings.Split(vm, " ")[0]
 		addr := section.Key(vm).String()
 
-		fmt.Printf("\nBringing '%s' online...\n\n", name)
+		fmt.Printf(Yellow("\nBringing '%s' online...\n\n"), name)
 
 		executeExternalProgram("vagrant", "up", name)
 
-		fmt.Printf("\nSearching for '%s' at %s...", name, addr)
+		fmt.Printf(Yellow("\nSearching for '%s' at %s..."), name, addr)
 
 		found := false
 		count := 0
@@ -105,10 +95,9 @@ func vagrant_up(cmd *cobra.Command) {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
 	if r, _ := cmd.Flags().GetBool("base"); r {
-		fmt.Println("\nApplying the base role with the minimal tag...")
+		fmt.Println(Yellow("\nApplying the base role with the minimal tag..."))
 		generate_play("dcjulian29.base")
 		execute_play(Play{
-			Limit:      sectionName,
 			Tags:       []string{"minimal"},
 			FlushCache: true,
 			Verbose:    verbose,
@@ -118,11 +107,10 @@ func vagrant_up(cmd *cobra.Command) {
 	role, _ := cmd.Flags().GetString("role")
 
 	if len(role) > 0 {
-		fmt.Printf("\nApplying the '%s' role...\n", role)
+		fmt.Printf(Teal("\nApplying the '%s' role...\n"), role)
 		generate_play(role)
 		execute_play(Play{
 			Name:    role,
-			Limit:   sectionName,
 			Verbose: verbose,
 		})
 	}

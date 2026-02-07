@@ -25,7 +25,6 @@ import (
 
 type Play struct {
 	Name          string
-	Limit         string
 	Tags          []string
 	AskVaultPass  bool
 	AskBecomePass bool
@@ -44,14 +43,6 @@ var (
 		Long:  "Provision ansible role to Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
 			playFromFlags.Name = args[0]
-
-			sectionName := "ansibledev"
-
-			if r, _ := cmd.Flags().GetBool("test"); r {
-				sectionName = "vagrant"
-			}
-
-			playFromFlags.Limit = sectionName
 			playFromFlags.Tags, _ = cmd.Flags().GetStringSlice("tags")
 			playFromFlags.AskBecomePass, _ = cmd.Flags().GetBool("becomepass")
 			playFromFlags.AskVaultPass, _ = cmd.Flags().GetBool("vaultpass")
@@ -72,17 +63,11 @@ var (
 func init() {
 	rootCmd.AddCommand(playCmd)
 
-	playCmd.Flags().BoolP("development", "d", true, "only play the role on the development VMs")
-	playCmd.Flags().BoolP("test", "t", false, "only play the role on the test VMs")
-
-	playCmd.MarkFlagsMutuallyExclusive("development", "test")
-
 	playCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 	playCmd.Flags().Bool("ask-vault-password", false, "ask for vault password")
 	playCmd.Flags().Bool("ask-become-password", false, "ask for privilege escalation password")
 	playCmd.Flags().Bool("flush-cache", false, "clear the fact cache for every host in inventory")
 	playCmd.Flags().BoolP("step", "s", false, "one-step-at-a-time: confirm each task before running")
-
 	playCmd.Flags().StringSlice("tags", []string{}, "only plays and task tagged with these values")
 }
 
