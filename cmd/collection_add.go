@@ -40,11 +40,7 @@ var collectionAddCmd = &cobra.Command{
 			source = name // Ansible Galaxy Collection
 		}
 
-		var requirements Requirements
-
-		if fileExists("requirements.yml") {
-			requirements, _ = readRequirementsFile()
-		}
+		requirements, _ := readRequirementsFile()
 
 		collection := Collection{
 			Name:    name,
