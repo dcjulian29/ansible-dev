@@ -23,8 +23,8 @@ var (
 	inventoryCmd = &cobra.Command{
 		Use:     "inventory",
 		Aliases: []string{"inv"},
-		Short:   "Show inventory information for the Ansible development vagrant environment",
-		Long:    "Show inventory information for the Ansible development vagrant environment",
+		Short:   "Show inventory for the Ansible development vagrant environment",
+		Long:    "Show inventory for the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
 			executeExternalProgram("ansible-inventory", "--list", "--yaml")
 		},

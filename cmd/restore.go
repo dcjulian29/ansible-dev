@@ -21,8 +21,8 @@ import (
 
 var restoreCmd = &cobra.Command{
 	Use:   "restore",
-	Short: "Restore Ansible collections and roles from files, URLs or Ansible Galaxy",
-	Long:  "Restore Ansible collections and roles from files, URLs or Ansible Galaxy",
+	Short: "Restore Ansible collections and roles from the requirements.yml file",
+	Long:  "Restore Ansible collections and roles from the requirements.yml file",
 	Run: func(cmd *cobra.Command, args []string) {
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		force, _ := cmd.Flags().GetBool("force")
