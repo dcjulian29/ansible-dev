@@ -270,7 +270,8 @@ func vagrant_file() {
     c.vm.network "private_network", ip: "192.168.57.5"
   end
   config.vm.define "rocky" do |c|
-    c.vm.box = "rockylinux/9"
+    c.vm.box = "rockylinux/10"
+    c.vm.box_url = "https://dl.rockylinux.org/pub/rocky/10.1/images/x86_64/Rocky-10-Vagrant-Vbox.latest.x86_64.box"
     c.vm.hostname = "rocky.dev"
     c.vm.network "private_network", ip: "192.168.57.6"
   end
