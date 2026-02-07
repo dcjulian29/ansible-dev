@@ -22,8 +22,8 @@ import (
 var (
 	destroyCmd = &cobra.Command{
 		Use:   "destroy",
-		Short: "Destroy the Ansible development vagrant environment",
-		Long:  "Destroy the Ansible development vagrant environment",
+		Short: "Destroy the running Ansible development vagrant environment",
+		Long:  "Destroy the running Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
 			vagrant_destroy()
 		},
