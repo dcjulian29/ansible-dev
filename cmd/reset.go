@@ -38,7 +38,7 @@ var (
 func init() {
 	rootCmd.AddCommand(resetCmd)
 
-	resetCmd.Flags().Bool("base", true, "provision the VMs with the base role minimal tag")
+	resetCmd.Flags().Bool("base", false, "provision the VMs with the base role minimal tag")
 	resetCmd.Flags().String("role", "", "provision the VMs with the specified role")
 	resetCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 }
