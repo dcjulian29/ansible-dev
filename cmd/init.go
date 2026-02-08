@@ -166,9 +166,9 @@ func host_vars() {
 		cobra.CheckErr(err)
 	}
 
-	fmt.Println("  ...    rocky.yml")
+	fmt.Println("  ...    alma.yml")
 
-	file, err = os.Create("host_vars/rocky.yml")
+	file, err = os.Create("host_vars/alma.yml")
 	cobra.CheckErr(err)
 
 	defer file.Close()
@@ -189,7 +189,7 @@ func inventory_file() {
 
 	content := []byte(`[vagrant]
 debian ansible_host=192.168.57.5
-rocky ansible_host=192.168.57.6
+alma ansible_host=192.168.57.6
 
 [all:vars]
 ansible_user=vagrant
@@ -252,7 +252,6 @@ func vagrant_file() {
   if Vagrant.has_plugin?("vagrant-vbguest")
     config.vbguest.auto_update = false
   end
-  config.vm.boot_timeout = 600
   config.vm.box_check_update = true
   config.vm.provision "ping", type: "shell", inline: "ping -c 1 192.168.57.1", run: "always"
   config.vm.synced_folder ".", "/vagrant", disabled: true
@@ -270,10 +269,9 @@ func vagrant_file() {
     c.vm.hostname = "debian.dev"
     c.vm.network "private_network", ip: "192.168.57.5"
   end
-  config.vm.define "rocky" do |c|
-    c.vm.box = "rockylinux/10"
-    c.vm.box_url = "https://dl.rockylinux.org/pub/rocky/10.1/images/x86_64/Rocky-10-Vagrant-Vbox.latest.x86_64.box"
-    c.vm.hostname = "rocky.dev"
+  config.vm.define "alma" do |c|
+    c.vm.box = "almalinux/10"
+    c.vm.hostname = "alma.dev"
     c.vm.network "private_network", ip: "192.168.57.6"
   end
 end
