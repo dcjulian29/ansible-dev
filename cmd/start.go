@@ -27,10 +27,10 @@ import (
 )
 
 var (
-	upCmd = &cobra.Command{
-		Use:   "up",
-		Short: "Starts and provision the Ansible development vagrant environment",
-		Long:  "Starts and provision the Ansible development vagrant environment",
+	startCmd = &cobra.Command{
+		Use:   "start",
+		Short: "Starts and potentially provision the Ansible development vagrant environment",
+		Long:  "Starts and potentially provision the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
 			vagrant_up(cmd)
 		},
@@ -42,11 +42,11 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(upCmd)
+	rootCmd.AddCommand(startCmd)
 
-	upCmd.Flags().Bool("base", false, "provision the VMs with the base role minimal tag")
-	upCmd.Flags().String("role", "", "provision the VMs with the specified role")
-	upCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
+	startCmd.Flags().Bool("base", false, "provision the VMs with the base role minimal tag")
+	startCmd.Flags().String("role", "", "provision the VMs with the specified role")
+	startCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 }
 
 func vagrant_up(cmd *cobra.Command) {
