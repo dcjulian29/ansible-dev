@@ -165,7 +165,9 @@ func removeDir(dirPath string) {
 }
 
 func removeFile(filePath string) {
-	cobra.CheckErr(fileExists(filePath))
+	if fileExists(filePath) {
+		cobra.CheckErr(os.Remove(filePath))
+	}
 }
 
 func Color(colorString string) func(...interface{}) string {
