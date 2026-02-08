@@ -252,7 +252,7 @@ func vagrant_file() {
   if Vagrant.has_plugin?("vagrant-vbguest")
     config.vbguest.auto_update = false
   end
-  config.vm.boot_timeout = 300
+  config.vm.boot_timeout = 600
   config.vm.box_check_update = true
   config.vm.provision "ping", type: "shell", inline: "ping -c 1 192.168.57.1", run: "always"
   config.vm.synced_folder ".", "/vagrant", disabled: true
