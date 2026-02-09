@@ -70,6 +70,8 @@ func create_folder() {
 	fmt.Println("  ...  roles/")
 	cobra.CheckErr(ensureDir("roles"))
 
+	yaml_ignore()
+	yaml_lint()
 	vagrant_file()
 
 }
@@ -122,8 +124,6 @@ kinds:
 profile: production
 skip_list:
   - experimental
-  - var-naming[no-role-prefix]
-verbosity: 1
 `)
 
 	if _, err = file.Write(content); err != nil {
@@ -239,7 +239,51 @@ func runbook() {
 		cobra.CheckErr(err)
 	}
 }
-#   variables needed for runbook
+
+func yaml_ignore() {
+	fmt.Println("  ...  .yamlignore")
+	file, err := os.Create(".yamlignore")
+	cobra.CheckErr(err)
+
+	defer file.Close()
+
+	content := []byte(`secrets.yml
+`)
+
+	if _, err = file.Write(content); err != nil {
+		cobra.CheckErr(err)
+	}
+}
+
+func yaml_lint() {
+	fmt.Println("  ...  .yamlint")
+	file, err := os.Create(".yamllint")
+	cobra.CheckErr(err)
+
+	defer file.Close()
+
+	content := []byte(`---
+extends: default
+
+rules:
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  indentation:
+    indent-sequences: true
+  line-length:
+    max: 125
+  new-lines: disable
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+
+ignore-from-file:
+  - .gitignore
+  - .yamlignore
 `)
 
 	if _, err = file.Write(content); err != nil {
