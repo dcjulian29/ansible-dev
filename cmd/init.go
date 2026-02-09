@@ -221,17 +221,24 @@ func runbook() {
   gather_facts: true
 
   handlers:
-#    - name: [Name of Handler]
-#      ...
+  #  - name: [Name of Handler]
+  #    ...
 
   tasks:
-#    - name: [Name of Task]
-#      ...
+  #  - name: [Name of Task]
+  #    ...
 
-#    - # Repeat as necessary
+  #  - # Repeat as necessary
 
   vars:
     name: value
+    # variables needed for runbook
+`)
+
+	if _, err = file.Write(content); err != nil {
+		cobra.CheckErr(err)
+	}
+}
 #   variables needed for runbook
 `)
 
