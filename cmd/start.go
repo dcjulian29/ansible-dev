@@ -27,6 +27,9 @@ import (
 )
 
 var (
+	roles []string
+	tags  []string
+
 	startCmd = &cobra.Command{
 		Use:   "start",
 		Short: "Starts and potentially provision the Ansible development vagrant environment",
@@ -44,8 +47,8 @@ var (
 func init() {
 	rootCmd.AddCommand(startCmd)
 
-	startCmd.Flags().Bool("base", false, "provision the VMs with the base role minimal tag")
-	startCmd.Flags().String("role", "", "provision the VMs with the specified role")
+	startCmd.Flags().StringSliceVar(&roles, "role", []string{}, "provision the VMs with the specified role(s)")
+	startCmd.Flags().StringSliceVar(&tags, "tag", []string{}, "apply the role with the specified tag(s)")
 	startCmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 }
 
@@ -88,25 +91,19 @@ func vagrant_up(cmd *cobra.Command) {
 
 	verbose, _ := cmd.Flags().GetBool("verbose")
 
-	if r, _ := cmd.Flags().GetBool("base"); r {
-		fmt.Println(Yellow("\nApplying the base role with the minimal tag..."))
-		generate_play("dcjulian29.base")
-		execute_play(Play{
-			Tags:       []string{"minimal"},
-			FlushCache: true,
-			Verbose:    verbose,
-		})
+	play := Play{
+		Tags:       tags,
+		FlushCache: true,
+		Verbose:    verbose,
 	}
 
-	role, _ := cmd.Flags().GetString("role")
-
-	if len(role) > 0 {
-		fmt.Printf(Teal("\nApplying the '%s' role...\n"), role)
-		generate_play(role)
-		execute_play(Play{
-			Name:    role,
-			Verbose: verbose,
-		})
+	if len(roles) > 0 {
+		for _, role := range roles {
+			fmt.Printf(Teal("\nApplying the '%s' role...\n"), role)
+			generate_play(role)
+			play.Name = role
+			execute_play(play)
+		}
 	}
 }
 
