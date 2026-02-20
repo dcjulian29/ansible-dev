@@ -31,9 +31,10 @@ var (
 	tags  []string
 
 	startCmd = &cobra.Command{
-		Use:   "start",
-		Short: "Starts and potentially provision the Ansible development vagrant environment",
-		Long:  "Starts and potentially provision the Ansible development vagrant environment",
+		Use:     "start",
+		Aliases: []string{"up"},
+		Short:   "Starts and potentially provision the Ansible development vagrant environment",
+		Long:    "Starts and potentially provision the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
 			vagrant_up(cmd)
 		},

@@ -25,9 +25,10 @@ import (
 
 var (
 	stopCmd = &cobra.Command{
-		Use:   "stop",
-		Short: "Stops the Ansible development vagrant environment",
-		Long:  "Stops the Ansible development vagrant environment",
+		Use:     "stop",
+		Aliases: []string{"down"},
+		Short:   "Stops the Ansible development vagrant environment",
+		Long:    "Stops the Ansible development vagrant environment",
 		Run: func(cmd *cobra.Command, args []string) {
 			vagrant_down()
 		},
