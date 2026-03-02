@@ -1,0 +1,57 @@
+/*
+Copyright © 2026 Julian Easterling <julian@julianscorner.com>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+package tag
+
+import (
+	"errors"
+
+	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/vagrant"
+	"github.com/dcjulian29/go-toolbox/execute"
+	"github.com/spf13/cobra"
+)
+
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tags <role>",
+		Short: "List all available tags in the role",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return cmd.Help()
+			}
+
+			err := ansible.GenerateRolePlay(args[0])
+			if err != nil {
+				return err
+			}
+
+			err = execute.ExternalProgram("ansible-playbook", "--list-tags", ".tmp/play.yml")
+			if err != nil {
+				return errors.New("can't execute playbook to list tags")
+			}
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := ansible.EnsureAnsibleDirectory(); err != nil {
+				return errors.New("not an Ansible development directory")
+			}
+
+			return vagrant.EnsureVagrantfile()
+		},
+	}
+
+	return cmd
+}

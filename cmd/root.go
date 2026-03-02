@@ -16,218 +16,80 @@ limitations under the License.
 package cmd
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 
+	"github.com/dcjulian29/ansible-dev/cmd/collection"
+	"github.com/dcjulian29/ansible-dev/cmd/destroy"
+	"github.com/dcjulian29/ansible-dev/cmd/initialize"
+	"github.com/dcjulian29/ansible-dev/cmd/inventory"
+	"github.com/dcjulian29/ansible-dev/cmd/ping"
+	"github.com/dcjulian29/ansible-dev/cmd/play"
+	"github.com/dcjulian29/ansible-dev/cmd/reset"
+	"github.com/dcjulian29/ansible-dev/cmd/restore"
+	"github.com/dcjulian29/ansible-dev/cmd/role"
+	"github.com/dcjulian29/ansible-dev/cmd/runbook"
+	"github.com/dcjulian29/ansible-dev/cmd/shell"
+	"github.com/dcjulian29/ansible-dev/cmd/start"
+	"github.com/dcjulian29/ansible-dev/cmd/status"
+	"github.com/dcjulian29/ansible-dev/cmd/stop"
+	"github.com/dcjulian29/ansible-dev/cmd/tag"
+	"github.com/dcjulian29/ansible-dev/cmd/task"
+	"github.com/dcjulian29/ansible-dev/cmd/upgrade"
+	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"go.szostok.io/version/extension"
 )
 
-var (
-	cfgFile          string
-	folderPath       string
-	workingDirectory string
-	Info             = Teal
-	Warn             = Yellow
-	Fatal            = Red
-	Black            = Color("\033[1;30m%s\033[0m")
-	Red              = Color("\033[1;31m%s\033[0m")
-	Green            = Color("\033[1;32m%s\033[0m")
-	Yellow           = Color("\033[1;33m%s\033[0m")
-	Purple           = Color("\033[1;34m%s\033[0m")
-	Magenta          = Color("\033[1;35m%s\033[0m")
-	Teal             = Color("\033[1;36m%s\033[0m")
-	White            = Color("\033[1;37m%s\033[0m")
+var rootCmd = &cobra.Command{
+	Use:   "ansible-dev",
+	Short: "ansible-dev enables development of Ansible playbooks, roles, and runbooks.",
+	Long: `ansible-dev integrates with Vagrant to enable developers to define, develop, and test Ansible
+playbooks, roles, and runbooks.
 
-	rootCmd = &cobra.Command{
-		Use:   "ansible-dev",
-		Short: "ansible-dev enables development of Ansible playbooks, roles, and modules.",
-		Long: `ansible-dev integrates with Vagrant to enable users to define, develop, and test Ansible
-playbooks, roles, and modules. It allows users to define and manage infrastructure resources and
-uses the providers automation engine to provision and run plays.
+By utilizing Ansible, developers/operators can automate the deployment of software applications
+across multiple hosting providers, reducing the time and effort required to manage complex
+infrastructure environments.`,
+	SilenceErrors: true,
+	SilenceUsage:  true,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return cmd.Help()
+		}
 
-By utilizing Ansible's playbooks, roles, and modules, developers can automate the deployment of
-software applications across multiple hosting providers, reducing the time and effort required to
-manage complex infrastructure environments. These playbooks, roles, and modules enable developers to
-create, manage, and provision infrastructure resources like virtual machines, load balancers, and
-databases.`,
-	}
-)
+		return nil
+	},
+}
 
 func Execute() {
-	workingDirectory, _ = os.Getwd()
-
 	rootCmd.AddCommand(
 		extension.NewVersionCobraCmd(
 			extension.WithUpgradeNotice("dcjulian29", "ansible-dev"),
 		),
 	)
 
-	cobra.CheckErr(rootCmd.Execute())
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, "\n"+color.Fatal(err.Error()))
+		os.Exit(1)
+	}
 }
 
 func init() {
-	pwd, _ := os.Getwd()
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "specify configuration file")
-	rootCmd.PersistentFlags().StringVar(&folderPath, "path", pwd, "path to development folder")
-	cobra.OnInitialize(initConfig)
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		pwd, err := os.Getwd()
-		cobra.CheckErr(err)
-
-		viper.AddConfigPath(home)
-		viper.AddConfigPath(pwd)
-		viper.SetConfigType("yml")
-		viper.SetConfigName(".ansible-dev")
-	}
-
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	}
-}
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-
-	return !info.IsDir()
-}
-
-func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return false
-	}
-
-	return info.IsDir()
-}
-
-func ensureDir(dirPath string) error {
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func ensureAnsibleDirectory() {
-	if workingDirectory != folderPath {
-		cobra.CheckErr(os.Chdir(folderPath))
-	}
-
-	if !fileExists("ansible.cfg") {
-		fmt.Println(Fatal("not an ansible development folder"))
-		os.Exit(1)
-	}
-}
-
-func executeExternalProgram(program string, params ...string) {
-	cmd := exec.Command(program, params...)
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-
-	cobra.CheckErr(cmd.Run())
-}
-
-func removeDir(dirPath string) {
-	if dirExists(dirPath) {
-		files, err := filepath.Glob(filepath.Join(dirPath, "*"))
-		cobra.CheckErr(err)
-
-		for _, file := range files {
-			cobra.CheckErr(os.RemoveAll(file))
-		}
-
-		cobra.CheckErr(os.Remove(dirPath))
-	}
-}
-
-func removeFile(filePath string) {
-	if fileExists(filePath) {
-		cobra.CheckErr(os.Remove(filePath))
-	}
-}
-
-func Color(colorString string) func(...interface{}) string {
-	sprint := func(args ...interface{}) string {
-		return fmt.Sprintf(colorString,
-			fmt.Sprint(args...))
-	}
-
-	return sprint
-}
-
-func ensureVagrantfile() {
-	if !fileExists("Vagrantfile") {
-		fmt.Println(Fatal("can't find the Vagrantfile"))
-		os.Exit(1)
-	}
-}
-
-func fileHash(filePath string) string {
-	hash := sha256.New()
-
-	sourceFile, err := os.Open(filePath)
-	cobra.CheckErr(err)
-
-	defer sourceFile.Close()
-
-	_, err = io.Copy(hash, sourceFile)
-	cobra.CheckErr(err)
-
-	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
-func scanDirectory(dir_path string, ignore []string) ([]string, []string) {
-	folders := []string{}
-	files := []string{}
-
-	filepath.Walk(dir_path, func(path string, f os.FileInfo, err error) error {
-		_continue := false
-
-		for _, i := range ignore {
-			if strings.Contains(path, i) {
-				_continue = true
-			}
-		}
-
-		if !_continue {
-			s, err := os.Stat(path)
-			cobra.CheckErr(err)
-
-			f_mode := s.Mode()
-
-			if f_mode.IsDir() {
-				folders = append(folders, path)
-			} else if f_mode.IsRegular() {
-				files = append(files, path)
-			}
-		}
-
-		return nil
-	})
-
-	return folders, files
+	rootCmd.AddCommand(collection.NewCommand())
+	rootCmd.AddCommand(destroy.NewCommand())
+	rootCmd.AddCommand(initialize.NewCommand())
+	rootCmd.AddCommand(inventory.NewCommand())
+	rootCmd.AddCommand(ping.NewCommand())
+	rootCmd.AddCommand(play.NewCommand())
+	rootCmd.AddCommand(reset.NewCommand())
+	rootCmd.AddCommand(restore.NewCommand())
+	rootCmd.AddCommand(role.NewCommand())
+	rootCmd.AddCommand(runbook.NewCommand())
+	rootCmd.AddCommand(shell.NewCommand())
+	rootCmd.AddCommand(start.NewCommand())
+	rootCmd.AddCommand(status.NewCommand())
+	rootCmd.AddCommand(stop.NewCommand())
+	rootCmd.AddCommand(tag.NewCommand())
+	rootCmd.AddCommand(task.NewCommand())
+	rootCmd.AddCommand(upgrade.NewCommand())
 }
