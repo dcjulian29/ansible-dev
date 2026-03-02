@@ -117,22 +117,12 @@ func compareCmd() *cobra.Command {
 							if err != nil {
 								return err
 							}
-						} else {
-							if checksum {
-								msg := fmt.Sprintf("%s: ==> %s", strings.Replace(f, workingEntry+sep, "", 1))
-								fmt.Println(color.Yellow(msg))
-							}
 						}
 
 						if filesystem.FileExists(f2) {
 							h2, err = filesystem.FileHash(f2)
 							if err != nil {
 								return err
-							}
-						} else {
-							if checksum {
-								msg := fmt.Sprintf("%s: ==> %s", strings.Replace(f2, workingEntry+sep, "", 1))
-								fmt.Println(color.Yellow(msg))
 							}
 						}
 
