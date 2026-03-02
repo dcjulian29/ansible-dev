@@ -13,25 +13,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package collection
 
 import (
+	"github.com/dcjulian29/ansible-dev/internal/ansible"
 	"github.com/spf13/cobra"
 )
 
-var collectionCmd = &cobra.Command{
-	Use:     "collection",
-	Aliases: []string{"collections"},
-	Short:   "Provide management of ansible collections in the development environment",
-	Long:    "Provide management of ansible collections in the development environment",
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
-	},
-	PreRun: func(cmd *cobra.Command, args []string) {
-		ensureAnsibleDirectory()
-	},
-}
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "collection",
+		Aliases: []string{"collections"},
+		Short:   "Provide management of ansible collections in the development environment",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return ansible.EnsureAnsibleDirectory()
+		},
+	}
 
-func init() {
-	rootCmd.AddCommand(collectionCmd)
+	cmd.AddCommand(addCmd())
+	cmd.AddCommand(listCmd())
+	cmd.AddCommand(purgeCmd())
+	cmd.AddCommand(removeCmd())
+
+	return cmd
 }

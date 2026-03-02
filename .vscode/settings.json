@@ -13,6 +13,7 @@
     "modifyvm",
     "nfpms",
     "nodiff",
+    "nolint",
     "olekukonko",
     "szostok",
     "theckman",
