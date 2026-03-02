@@ -13,14 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package ansible
 
 import (
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
+	"github.com/dcjulian29/go-toolbox/filesystem"
 	"gopkg.in/yaml.v3"
 )
 
@@ -42,44 +42,64 @@ type Role struct {
 	Version string `yaml:"version"`
 }
 
-func ensureRequirementsFile() {
-	if !fileExists("requirements.yml") {
-		fmt.Println(Fatal("requirements.yml file is not present!"))
-		return
+func EnsureRequirementsFile() error {
+	exist := RequirementsFileExist()
+	if !exist {
+		return fmt.Errorf("requirements.yml file is not present")
 	}
+
+	return nil
 }
 
-func readRequirementsFile() (Requirements, error) {
-	ensureRequirementsFile()
+func ReadRequirements() (Requirements, error) {
+	err := EnsureRequirementsFile()
+	if err != nil {
+		return Requirements{}, err
+	}
 
 	var requirements Requirements
 
 	file, err := os.Open("requirements.yml")
-	cobra.CheckErr(err)
+	if err != nil {
+		return Requirements{}, err
+	}
 
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	data, err := io.ReadAll(file)
-	cobra.CheckErr(err)
+	if err != nil {
+		return Requirements{}, err
+	}
 
-	cobra.CheckErr(yaml.Unmarshal(data, &requirements))
+	err = yaml.Unmarshal(data, &requirements)
+	if err != nil {
+		return Requirements{}, err
+	}
 
 	return requirements, nil
 }
 
-func writeRequirementsFile(requirements Requirements) error {
-	ensureRequirementsFile()
+func RequirementsFileExist() bool {
+	return filesystem.FileExists("requirements.yml")
+}
 
+func SaveRequirements(requirements Requirements) error {
 	file, err := os.OpenFile("requirements.yml", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-	cobra.CheckErr(err)
+	if err != nil {
+		return err
+	}
 
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	data, err := yaml.Marshal(requirements)
-	cobra.CheckErr(err)
+	if err != nil {
+		return err
+	}
 
 	_, err = file.Write(data)
-	cobra.CheckErr(err)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
