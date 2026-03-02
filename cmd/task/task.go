@@ -13,27 +13,32 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package task
 
 import (
+	"errors"
 	"strings"
 
+	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/vagrant"
+	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/spf13/cobra"
 )
 
-var (
-	tasksCmd = &cobra.Command{
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "tasks <role>",
 		Short: "List all tasks that would be executed in the role",
-		Long:  "List all tasks that would be executed in the role",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				cmd.Help()
-				return
+				return cmd.Help()
 			}
 
-			generate_play(args[0])
+			err := ansible.GenerateRolePlay(args[0])
+			if err != nil {
+				return err
+			}
 
 			var param []string
 
@@ -46,17 +51,23 @@ var (
 
 			param = append(param, "--list-tasks", ".tmp/play.yml")
 
-			executeExternalProgram("ansible-playbook", param...)
+			err = execute.ExternalProgram("ansible-playbook", param...)
+			if err != nil {
+				return err
+			}
+
+			return nil
 		},
-		PreRun: func(cmd *cobra.Command, args []string) {
-			ensureAnsibleDirectory()
-			ensureVagrantfile()
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := ansible.EnsureAnsibleDirectory(); err != nil {
+				return errors.New("not an Ansible development directory")
+			}
+
+			return vagrant.EnsureVagrantfile()
 		},
 	}
-)
 
-func init() {
-	rootCmd.AddCommand(tasksCmd)
+	cmd.Flags().StringSlice("tags", []string{}, "only plays and task tagged with these values")
 
-	tasksCmd.Flags().StringSlice("tags", []string{}, "only plays and task tagged with these values")
+	return cmd
 }
