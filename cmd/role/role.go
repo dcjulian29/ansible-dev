@@ -13,33 +13,34 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package role
 
 import (
+	"github.com/dcjulian29/ansible-dev/internal/ansible"
 	"github.com/spf13/cobra"
 )
 
-var (
-	tagsCmd = &cobra.Command{
-		Use:   "tags <role>",
-		Short: "List all available tags in the role",
-		Long:  "List all available tags in the role",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				cmd.Help()
-				return
-			}
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "role",
+		Aliases: []string{"roles"},
+		Short:   "Provide management of ansible roles in the development environment",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.Help()
 
-			generate_play(args[0])
-			executeExternalProgram("ansible-playbook", "--list-tags", ".tmp/play.yml")
+			return nil
 		},
-		PreRun: func(cmd *cobra.Command, args []string) {
-			ensureAnsibleDirectory()
-			ensureVagrantfile()
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return ansible.EnsureAnsibleDirectory()
 		},
 	}
-)
 
-func init() {
-	rootCmd.AddCommand(tagsCmd)
+	cmd.AddCommand(addCmd())
+	cmd.AddCommand(compareCmd())
+	cmd.AddCommand(deleteCmd())
+	cmd.AddCommand(listCmd())
+	cmd.AddCommand(newCmd())
+	cmd.AddCommand(removeCmd())
+
+	return cmd
 }
