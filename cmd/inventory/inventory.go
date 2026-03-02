@@ -16,15 +16,11 @@ limitations under the License.
 package inventory
 
 import (
-	"errors"
-
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
 	"github.com/dcjulian29/ansible-dev/internal/vagrant"
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/spf13/cobra"
 )
-
-var variables bool
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -33,9 +29,18 @@ func NewCommand() *cobra.Command {
 		Short:   "Show inventory information for the Ansible development vagrant environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			param := []string{}
+			variables, _ := cmd.Flags().GetBool("variables")
 
 			if variables {
-				param = append(param, "--list", "--yaml")
+				if r, _ := cmd.Flags().GetBool("toml"); r {
+					param = append(param, "--toml")
+				}
+
+				if r, _ := cmd.Flags().GetBool("yaml"); r {
+					param = append(param, "--yaml")
+				}
+
+				param = append(param, "--list")
 			} else {
 				param = append(param, "--graph")
 			}
@@ -49,14 +54,18 @@ func NewCommand() *cobra.Command {
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := ansible.EnsureAnsibleDirectory(); err != nil {
-				return errors.New("not an Ansible development directory")
+				return err
 			}
 
 			return vagrant.EnsureVagrantfile()
 		},
 	}
 
-	cmd.Flags().BoolVar(&variables, "variables", false, "include host variables")
+	cmd.Flags().Bool("variables", false, "include host variables")
+	cmd.Flags().Bool("toml", false, "Use TOML format instead of default JSON")
+	cmd.Flags().BoolP("yaml", "y", false, "Use YAML format instead of default JSON")
+
+	cmd.MarkFlagsMutuallyExclusive("toml", "yaml")
 
 	return cmd
 }
