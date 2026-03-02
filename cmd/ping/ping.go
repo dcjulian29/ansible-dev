@@ -13,27 +13,37 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package ping
 
 import (
+	"errors"
+
+	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/vagrant"
+	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/spf13/cobra"
 )
 
-var (
-	pingCmd = &cobra.Command{
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "ping",
 		Short: "Ping the Ansible development vagrant environment",
-		Long:  "Ping the Ansible development vagrant environment",
-		Run: func(cmd *cobra.Command, args []string) {
-			executeExternalProgram("ansible", "-i", "hosts.ini", "-m", "ping")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := execute.ExternalProgram("ansible", "-i", "hosts.ini", "-m", "ping", "all")
+			if err != nil {
+				return err
+			}
+
+			return nil
 		},
-		PreRun: func(cmd *cobra.Command, args []string) {
-			ensureAnsibleDirectory()
-			ensureVagrantfile()
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := ansible.EnsureAnsibleDirectory(); err != nil {
+				return errors.New("not an Ansible development directory")
+			}
+
+			return vagrant.EnsureVagrantfile()
 		},
 	}
-)
 
-func init() {
-	rootCmd.AddCommand(pingCmd)
+	return cmd
 }
