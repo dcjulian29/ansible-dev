@@ -13,76 +13,88 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package initialize
 
 import (
+	"errors"
 	"fmt"
-	"os"
 
+	"github.com/dcjulian29/go-toolbox/color"
+	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/spf13/cobra"
 )
 
-var (
-	force bool
+var force bool
 
-	initCmd = &cobra.Command{
-		Use:     "init",
-		Aliases: []string{"initialize"},
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "initialize",
+		Aliases: []string{"init"},
 		Short:   "Initialize an Ansible development vagrant environment",
-		Long:    "Initialize an Ansible development vagrant environment",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(Yellow("Initializing development environment..."))
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println(color.Yellow("Initializing development environment..."))
 
-			create_folder()
+			if filesystem.FileExists("ansible.cfg") && !force {
+				return errors.New("ansible development environment already exist and force was not provided")
+			}
+
+			if err := ansible_cfg(); err != nil {
+				return err
+			}
+
+			if err := ansible_lint(); err != nil {
+				return err
+			}
+
+			fmt.Println("  ...  collections/")
+			if err := filesystem.EnsureDirectoryExist("collections"); err != nil {
+				return err
+			}
+
+			if err := group_vars(); err != nil {
+				return err
+			}
+
+			if err := host_vars(); err != nil {
+				return err
+			}
+
+			if err := inventory_file(); err != nil {
+				return err
+			}
+
+			if err := runbook(); err != nil {
+				return err
+			}
+
+			fmt.Println("  ...  roles/")
+			if err := filesystem.EnsureDirectoryExist("roles"); err != nil {
+				return err
+			}
+
+			if err := yaml_ignore(); err != nil {
+				return err
+			}
+
+			if err := yaml_lint(); err != nil {
+				return err
+			}
+
+			if err := vagrant_file(); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
-)
 
-func init() {
-	rootCmd.AddCommand(initCmd)
+	cmd.Flags().BoolVarP(&force, "force", "f", false, "overwrite an existing development environment")
 
-	initCmd.Flags().BoolVarP(&force, "force", "f", false, "overwrite an existing development environment")
+	return cmd
 }
 
-func create_folder() {
-	if workingDirectory != folderPath {
-		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-			cobra.CheckErr(os.MkdirAll(folderPath, 0755))
-		}
-	}
-
-	if fileExists("ansible.cfg") && !force {
-		fmt.Println(Fatal("folder for ansible development already exist and force was not provided"))
-		os.Exit(1)
-	}
-
-	ansible_cfg()
-	ansible_lint()
-
-	fmt.Println("  ...  collections/")
-	cobra.CheckErr(ensureDir("collections"))
-
-	group_vars()
-	host_vars()
-	inventory_file()
-	runbook()
-
-	fmt.Println("  ...  roles/")
-	cobra.CheckErr(ensureDir("roles"))
-
-	yaml_ignore()
-	yaml_lint()
-	vagrant_file()
-
-}
-
-func ansible_cfg() {
+func ansible_cfg() error {
 	fmt.Println("  ...  ansible.cfg")
-
-	file, err := os.Create("ansible.cfg")
-	cobra.CheckErr(err)
-
-	defer file.Close()
 
 	content := []byte(`[defaults]
 any_errors_fatal            = true
@@ -96,17 +108,15 @@ callback_result_format      = yaml
 verbosity                   = 1
 `)
 
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist("ansible.cfg", content); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func ansible_lint() {
+func ansible_lint() error {
 	fmt.Println("  ...  .ansible-lint")
-	file, err := os.Create(".ansible-lint")
-	cobra.CheckErr(err)
-
-	defer file.Close()
 
 	content := []byte(`---
 enable_list:
@@ -126,66 +136,55 @@ skip_list:
   - experimental
 `)
 
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist(".ansible-lint", content); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func group_vars() {
+func group_vars() error {
 	fmt.Println("  ...  group_vars/")
-	cobra.CheckErr(ensureDir("group_vars/"))
+	if err := filesystem.EnsureDirectoryExist("group_vars"); err != nil {
+		return err
+	}
 
 	fmt.Println("  ...    vagrant.yml")
 
-	file, err := os.Create("group_vars/vagrant.yml")
-	cobra.CheckErr(err)
+	content := []byte("---\nvarname: value")
 
-	defer file.Close()
-
-	content := []byte("---\nname: value")
-
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist("group_vars/vagrant.yml", content); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func host_vars() {
+func host_vars() error {
 	fmt.Println("  ...  host_vars/")
-	cobra.CheckErr(ensureDir("host_vars"))
+	if err := filesystem.EnsureDirectoryExist("host_vars"); err != nil {
+		return err
+	}
+
+	content := []byte("---\nvarname: value")
 
 	fmt.Println("  ...    debian.yml")
 
-	file, err := os.Create("host_vars/debian.yml")
-	cobra.CheckErr(err)
-
-	defer file.Close()
-
-	content := []byte("---\nname: value")
-
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist("host_vars/debian.yml", content); err != nil {
+		return err
 	}
 
 	fmt.Println("  ...    alma.yml")
 
-	file, err = os.Create("host_vars/alma.yml")
-	cobra.CheckErr(err)
-
-	defer file.Close()
-
-	content = []byte("---\nname: value")
-
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist("host_vars/alma.yml", content); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func inventory_file() {
+func inventory_file() error {
 	fmt.Println("  ...  hosts.ini")
-	file, err := os.Create("hosts.ini")
-	cobra.CheckErr(err)
-
-	defer file.Close()
 
 	content := []byte(`[vagrant]
 debian ansible_host=192.168.57.5
@@ -198,20 +197,20 @@ ansible_port=22
 ansible_ssh_private_key_file=~/.ssh/insecure_private_key
 `)
 
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist("hosts.ini", content); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func runbook() {
+func runbook() error {
 	fmt.Println("  ...  playbooks/")
-	cobra.CheckErr(ensureDir("playbooks"))
+	if err := filesystem.EnsureDirectoryExist("playbooks"); err != nil {
+		return err
+	}
 
 	fmt.Println("  ...    runbook.yml")
-	file, err := os.Create("playbooks/runbook.yml")
-	cobra.CheckErr(err)
-
-	defer file.Close()
 
 	content := []byte(`---
 - name: Test Ansible Runbook
@@ -235,32 +234,28 @@ func runbook() {
     # variables needed for runbook
 `)
 
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist("playbooks/runbook.yml", content); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func yaml_ignore() {
+func yaml_ignore() error {
 	fmt.Println("  ...  .yamlignore")
-	file, err := os.Create(".yamlignore")
-	cobra.CheckErr(err)
-
-	defer file.Close()
 
 	content := []byte(`secrets.yml
 `)
 
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist(".yamlignore", content); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func yaml_lint() {
+func yaml_lint() error {
 	fmt.Println("  ...  .yamlint")
-	file, err := os.Create(".yamllint")
-	cobra.CheckErr(err)
-
-	defer file.Close()
 
 	content := []byte(`---
 extends: default
@@ -286,24 +281,22 @@ ignore-from-file:
   - .yamlignore
 `)
 
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist(".yamlint", content); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func vagrant_file() {
+func vagrant_file() error {
 	fmt.Println("  ...  Vagrantfile")
-	file, err := os.Create("Vagrantfile")
-	cobra.CheckErr(err)
-
-	defer file.Close()
 
 	content := []byte(`Vagrant.configure("2") do |config|
   config.ssh.insert_key = false
   if Vagrant.has_plugin?("vagrant-vbguest")
     config.vbguest.auto_update = false
   end
-    config.vm.boot_timeout = 300
+    config.vm.boot_timeout = 600
     config.vm.box_check_update = true
   config.vm.provision "ping", type: "shell", inline: "ping -c 1 192.168.57.1", run: "always"
   config.vm.synced_folder ".", "/vagrant", disabled: true
@@ -329,7 +322,9 @@ func vagrant_file() {
 end
 `)
 
-	if _, err = file.Write(content); err != nil {
-		cobra.CheckErr(err)
+	if err := filesystem.EnsureFileExist("Vagrantfile", content); err != nil {
+		return err
 	}
+
+	return nil
 }
