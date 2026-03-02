@@ -29,8 +29,7 @@ func addCmd() *cobra.Command {
 		Short: "Add Ansible role to requirements.yml",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			name := args[0]
@@ -52,7 +51,9 @@ func addCmd() *cobra.Command {
 
 			requirements.Roles = append(requirements.Roles, role)
 
-			ansible.SaveRequirements(requirements)
+			if err := ansible.SaveRequirements(requirements); err != nil {
+				return err
+			}
 
 			msg := fmt.Sprintf("role '%s' added to requirements.yml but must be restored before use", name)
 			fmt.Println(color.Info(msg))

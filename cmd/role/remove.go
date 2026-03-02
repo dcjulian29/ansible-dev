@@ -29,8 +29,7 @@ func removeCmd() *cobra.Command {
 		Short: "Remove Ansible role from requirements.yml",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			var changed []ansible.Role
@@ -47,12 +46,14 @@ func removeCmd() *cobra.Command {
 			}
 
 			if !found {
-				return fmt.Errorf("role '%s' not present.", role)
+				return fmt.Errorf("role '%s' not present", role)
 			}
 
 			if len(changed) > 0 {
 				requirements.Roles = changed
-				ansible.SaveRequirements(requirements)
+				if err := ansible.SaveRequirements(requirements); err != nil {
+					return err
+				}
 
 				msg := fmt.Sprintf("role '%s' removed from requirements.yml", role)
 				fmt.Println(color.Info(msg))

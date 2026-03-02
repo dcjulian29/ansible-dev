@@ -27,8 +27,7 @@ func deleteCmd() *cobra.Command {
 		Short: "Remove Ansible role files from the development environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			role := args[0]

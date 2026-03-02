@@ -52,7 +52,9 @@ func addCmd() *cobra.Command {
 
 			requirements.Collections = append(requirements.Collections, collection)
 
-			ansible.SaveRequirements(requirements)
+			if err := ansible.SaveRequirements(requirements); err != nil {
+				return err
+			}
 
 			msg := fmt.Sprintf("collection '%s' added to requirements.yml but must be restored before use", name)
 			fmt.Println(color.Info(msg))

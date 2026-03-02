@@ -29,8 +29,7 @@ func newCmd() *cobra.Command {
 		Short: "Create a new Ansible role in the development environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				cmd.Help()
-				return nil
+				return cmd.Help()
 			}
 
 			role := args[0]
@@ -43,7 +42,9 @@ func newCmd() *cobra.Command {
 					return fmt.Errorf("role '%s' exists. Use '--force' to replace", role)
 				}
 
-				filesystem.RemoveDirectory(folder)
+				if err := filesystem.RemoveDirectory(folder); err != nil {
+					return err
+				}
 			}
 
 			verbose, _ := cmd.Flags().GetBool("verbose")

@@ -43,10 +43,14 @@ func listCmd() *cobra.Command {
 
 				for _, r := range requirements.Roles {
 					row := []string{r.Name, r.Source, r.Version}
-					table.Append(row)
+					if err := table.Append(row); err != nil {
+						return err
+					}
 				}
 
-				table.Render()
+				if err := table.Render(); err != nil {
+					return err
+				}
 			} else {
 				param := []string{"role", "list"}
 
@@ -54,7 +58,7 @@ func listCmd() *cobra.Command {
 					param = []string{"role", "list", "-v"}
 				}
 
-				execute.ExternalProgram("ansible-galaxy", param...)
+				return execute.ExternalProgram("ansible-galaxy", param...)
 			}
 
 			return nil

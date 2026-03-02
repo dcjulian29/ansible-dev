@@ -43,10 +43,12 @@ func listCmd() *cobra.Command {
 
 				for _, c := range requirements.Collections {
 					row := []string{c.Name, c.Source, c.Type, c.Version}
-					table.Append(row)
+					if err := table.Append(row); err != nil {
+						return nil
+					}
 				}
 
-				table.Render()
+				return table.Render()
 			} else {
 				param := []string{"collection", "list"}
 

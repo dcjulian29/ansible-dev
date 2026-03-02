@@ -45,13 +45,16 @@ func removeCmd() *cobra.Command {
 
 			if len(changed) > 0 {
 				requirements.Collections = changed
-				ansible.SaveRequirements(requirements)
+				if err := ansible.SaveRequirements(requirements); err != nil {
+					return err
+				}
+
 				msg := fmt.Sprintf("collection '%s' removed from requirements.yml", collection)
 				fmt.Println(color.Info(msg))
 				return nil
 			}
 
-			return fmt.Errorf("collection '%s' not present.", collection)
+			return fmt.Errorf("collection '%s' not present", collection)
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return ansible.EnsureAnsibleDirectory()

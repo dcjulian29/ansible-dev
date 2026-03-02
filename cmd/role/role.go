@@ -26,9 +26,7 @@ func NewCommand() *cobra.Command {
 		Aliases: []string{"roles"},
 		Short:   "Provide management of ansible roles in the development environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Help()
-
-			return nil
+			return cmd.Help()
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return ansible.EnsureAnsibleDirectory()
