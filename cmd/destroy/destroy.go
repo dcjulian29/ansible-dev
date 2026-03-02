@@ -13,38 +13,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package destroy
 
 import (
+	"errors"
+
+	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/vagrant"
 	"github.com/spf13/cobra"
 )
 
-var (
-	destroyCmd = &cobra.Command{
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "destroy",
 		Short: "Destroy the Ansible development vagrant environment",
-		Long:  "Destroy the Ansible development vagrant environment",
-		Run: func(cmd *cobra.Command, args []string) {
-			vagrant_destroy()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return vagrant.Destroy()
 		},
-		PreRun: func(cmd *cobra.Command, args []string) {
-			ensureAnsibleDirectory()
-			ensureVagrantfile()
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := ansible.EnsureAnsibleDirectory(); err != nil {
+				return errors.New("not an Ansible development directory")
+			}
+
+			return vagrant.EnsureVagrantfile()
 		},
 	}
-)
 
-func init() {
-	rootCmd.AddCommand(destroyCmd)
-}
-
-func vagrant_destroy() {
-	param := []string{"destroy", "--force"}
-
-	executeExternalProgram("vagrant", param...)
-
-	removeFile("ansible.log")
-
-	removeDir(".vagrant")
-	removeDir(".tmp")
+	return cmd
 }
