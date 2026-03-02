@@ -13,47 +13,52 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package shell
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 
+	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/vagrant"
+	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/spf13/cobra"
 )
 
-var (
-	shellCommand string
+var shellCommand string
 
-	shellCmd = &cobra.Command{
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "shell [flags] -- <command>",
 		Short: "Execute shell command in the Ansible development vagrant environment",
-		Long:  "Execute shell command in the Ansible development vagrant environment",
 		Args: func(cmd *cobra.Command, args []string) error {
 			shellCommand = strings.Join(args, " ")
 			return nil
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(shellCommand) == 0 {
-				cmd.Help()
-				return
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return cmd.Help()
 			}
 
 			param := []string{
 				"-i", "hosts.ini",
 				"-m", "shell",
-				"-a", shellCommand,
+				"-a", fmt.Sprintf("\"%s\"", shellCommand),
 				"all",
 			}
 
-			executeExternalProgram("ansible", param...)
+			fmt.Println(param)
+			return execute.ExternalProgram("ansible", param...)
 		},
-		PreRun: func(cmd *cobra.Command, args []string) {
-			ensureAnsibleDirectory()
-			ensureVagrantfile()
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := ansible.EnsureAnsibleDirectory(); err != nil {
+				return errors.New("not an Ansible development directory")
+			}
+
+			return vagrant.EnsureVagrantfile()
 		},
 	}
-)
 
-func init() {
-	rootCmd.AddCommand(shellCmd)
+	return cmd
 }
