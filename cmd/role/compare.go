@@ -152,7 +152,9 @@ func compareCmd() *cobra.Command {
 							params = []string{repoEntry, workingEntry}
 						}
 
-						return execute.ExternalProgram(program, params...)
+						if err := execute.ExternalProgram(program, params...); err != nil {
+							return err
+						}
 					}
 				}
 			}
