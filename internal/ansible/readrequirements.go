@@ -13,44 +13,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package ansible
 
 import (
-	"fmt"
 	"io"
 	"os"
 
-	"github.com/dcjulian29/go-toolbox/filesystem"
 	"gopkg.in/yaml.v3"
 )
 
-type Requirements struct {
-	Collections []Collection `yaml:"collections"`
-	Roles       []Role       `yaml:"roles"`
-}
-
-type Collection struct {
-	Name    string `yaml:"name"`
-	Source  string `yaml:"src"`
-	Type    string `yaml:"type"`
-	Version string `yaml:"version"`
-}
-
-type Role struct {
-	Name    string `yaml:"name"`
-	Source  string `yaml:"src"`
-	Version string `yaml:"version"`
-}
-
-func EnsureRequirementsFile() error {
-	exist := RequirementsFileExist()
-	if !exist {
-		return fmt.Errorf("requirements.yml file is not present")
-	}
-
-	return nil
-}
-
+// ReadRequirements reads and parses the requirements.yml file in the current
+// working directory into a [Requirements] struct. It first calls
+// [EnsureRequirementsFile] to confirm the file exists, then deserializes the
+// YAML content.
+//
+// An error is returned if the file is missing, cannot be opened, cannot be
+// read, or contains invalid YAML that does not conform to the
+// [Requirements] schema.
 func ReadRequirements() (Requirements, error) {
 	err := EnsureRequirementsFile()
 	if err != nil {
@@ -77,29 +57,4 @@ func ReadRequirements() (Requirements, error) {
 	}
 
 	return requirements, nil
-}
-
-func RequirementsFileExist() bool {
-	return filesystem.FileExists("requirements.yml")
-}
-
-func SaveRequirements(requirements Requirements) error {
-	file, err := os.OpenFile("requirements.yml", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close() //nolint:errcheck
-
-	data, err := yaml.Marshal(requirements)
-	if err != nil {
-		return err
-	}
-
-	_, err = file.Write(data)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

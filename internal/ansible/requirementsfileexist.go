@@ -16,15 +16,12 @@ limitations under the License.
 
 package ansible
 
-// Role describes a single Ansible role dependency declared in the
-// requirements.yml file.
-//
-// Fields:
-//   - Name:    the role name as it appears in the Galaxy namespace or local path.
-//   - Source:  an optional URL or Galaxy reference where the role is hosted.
-//   - Version: an optional version constraint string (e.g. "v1.2.0").
-type Role struct {
-	Name    string `yaml:"name"`
-	Source  string `yaml:"src"`
-	Version string `yaml:"version"`
+import (
+	"github.com/dcjulian29/go-toolbox/filesystem"
+)
+
+// RequirementsFileExist reports whether a requirements.yml file exists in
+// the current working directory.
+func RequirementsFileExist() bool {
+	return filesystem.FileExists("requirements.yml")
 }

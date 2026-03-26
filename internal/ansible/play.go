@@ -13,18 +13,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package ansible
 
-import (
-	"errors"
-	"fmt"
-	"os"
-	"strings"
-
-	"github.com/dcjulian29/go-toolbox/execute"
-	"github.com/dcjulian29/go-toolbox/filesystem"
-)
-
+// Play describes the parameters for a single ansible-playbook invocation.
+//
+// Fields:
+//   - Name:          human-readable identifier for the play (typically a role or playbook name).
+//   - Tags:          optional Ansible tags used to limit which tasks are executed.
+//   - AskVaultPass:  when true, the --ask-vault-password flag is passed to ansible-playbook.
+//   - AskBecomePass: when true, the --ask-become-pass flag is passed to ansible-playbook.
+//   - FlushCache:    when true, the --flush-cache flag is passed to clear the fact cache.
+//   - Step:          when true, the --step flag is passed so each task must be confirmed.
+//   - Verbose:       when true, the -v flag is passed for increased output verbosity.
 type Play struct {
 	Name          string
 	Tags          []string
@@ -33,91 +34,4 @@ type Play struct {
 	FlushCache    bool
 	Step          bool
 	Verbose       bool
-}
-
-func ExecutePlay(play Play) error {
-	var param []string
-
-	if len(play.Tags) > 0 {
-		param = append(param, "--tags")
-		param = append(param, strings.Join(play.Tags, ","))
-	}
-
-	if play.FlushCache {
-		param = append(param, "--flush-cache")
-	}
-
-	if play.AskVaultPass {
-		param = append(param, "--ask-vault-password")
-	}
-
-	if play.Verbose {
-		param = append(param, "-v")
-	}
-
-	if play.Step {
-		param = append(param, "--step")
-	}
-
-	param = append(param, ".tmp/play.yml")
-
-	if filesystem.FileExists("ansible.log") {
-		err := os.Remove("ansible.log")
-		if err != nil {
-			return fmt.Errorf("can't remove ansible.log: %v", err)
-		}
-	}
-
-	if filesystem.FileExists(".tmp/play.yml") {
-		err := execute.ExternalProgram("ansible-playbook", param...)
-		if err != nil {
-			return fmt.Errorf("can't execute playbook: %v", err)
-		}
-	}
-
-	return nil
-}
-
-func GenerateRolePlay(roleName string) error {
-	file, err := ensurePlayFile()
-	if err != nil {
-		return errors.New("can't create temporary play file")
-	}
-
-	defer file.Close() //nolint:errcheck
-
-	content := `---
-- name: Test Ansible Role
-  hosts: all
-  any_errors_fatal: true
-  become: true
-
-  roles:
-`
-
-	content = fmt.Sprintf("%s%s", content, fmt.Sprintf("    - %s\n", roleName))
-
-	if _, err = file.WriteString(content); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func ensurePlayFile() (*os.File, error) {
-	if !filesystem.DirectoryExists(".tmp") {
-		err := os.Mkdir(".tmp", 0755)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if filesystem.FileExists(".tmp/play.yml") {
-		err := os.Remove(".tmp/play.yml")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return os.Create(".tmp/play.yml")
 }

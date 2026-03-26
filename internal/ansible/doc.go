@@ -1,5 +1,5 @@
 /*
-Copyright © 2026 Julian Easterling <julian@julianscorner.com>
+Copyright © 2026 Julian Easterling
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,17 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package ansible provides helper functions and types for managing Ansible
+// roles, playbooks, inventories, and Vagrant-based virtual machines used
+// during Ansible development and testing workflows.
 package ansible
-
-// Role describes a single Ansible role dependency declared in the
-// requirements.yml file.
-//
-// Fields:
-//   - Name:    the role name as it appears in the Galaxy namespace or local path.
-//   - Source:  an optional URL or Galaxy reference where the role is hosted.
-//   - Version: an optional version constraint string (e.g. "v1.2.0").
-type Role struct {
-	Name    string `yaml:"name"`
-	Source  string `yaml:"src"`
-	Version string `yaml:"version"`
-}

@@ -1,5 +1,5 @@
 /*
-Copyright © 2026 Julian Easterling julian@julianscorner.com
+Copyright © 2026 Julian Easterling <julian@julianscorner.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package ansible
 
 import (
-	"errors"
-
 	"github.com/dcjulian29/go-toolbox/filesystem"
 )
 
-func EnsureAnsibleDirectory() error {
-	if !filesystem.FileExists("ansible.cfg") {
-		return errors.New("not an ansible development folder")
+// RoleFolderExists reports whether the directory for the named role exists
+// on disk. It silently returns false if the path cannot be resolved.
+func RoleFolderExists(role string) bool {
+	folder, err := RoleFolder(role)
+	if err != nil {
+		return false
 	}
 
-	return nil
+	return filesystem.DirectoryExists(folder)
 }

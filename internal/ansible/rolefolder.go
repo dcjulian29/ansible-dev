@@ -16,15 +16,19 @@ limitations under the License.
 
 package ansible
 
-// Role describes a single Ansible role dependency declared in the
-// requirements.yml file.
-//
-// Fields:
-//   - Name:    the role name as it appears in the Galaxy namespace or local path.
-//   - Source:  an optional URL or Galaxy reference where the role is hosted.
-//   - Version: an optional version constraint string (e.g. "v1.2.0").
-type Role struct {
-	Name    string `yaml:"name"`
-	Source  string `yaml:"src"`
-	Version string `yaml:"version"`
+import (
+	"path/filepath"
+)
+
+// RoleFolder returns the absolute path to the directory for the named role.
+// It reads the "roles_path" setting from ansible.cfg to determine the base
+// directory. An error is returned if ansible.cfg cannot be loaded or the
+// setting is missing.
+func RoleFolder(role string) (string, error) {
+	folder, err := RootRoleFolder()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(folder, role), nil
 }

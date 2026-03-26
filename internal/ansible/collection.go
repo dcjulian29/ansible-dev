@@ -16,15 +16,17 @@ limitations under the License.
 
 package ansible
 
-// Role describes a single Ansible role dependency declared in the
-// requirements.yml file.
+// Collection describes a single Ansible Galaxy collection dependency
+// declared in the requirements.yml file.
 //
 // Fields:
-//   - Name:    the role name as it appears in the Galaxy namespace or local path.
-//   - Source:  an optional URL or Galaxy reference where the role is hosted.
-//   - Version: an optional version constraint string (e.g. "v1.2.0").
-type Role struct {
+//   - Name:    the fully qualified collection name (e.g. "community.general").
+//   - Source:  an optional URL or Galaxy server where the collection is hosted.
+//   - Type:    the source type (e.g. "galaxy", "git", "url").
+//   - Version: an optional version constraint string (e.g. ">=2.0.0").
+type Collection struct {
 	Name    string `yaml:"name"`
 	Source  string `yaml:"src"`
+	Type    string `yaml:"type"`
 	Version string `yaml:"version"`
 }

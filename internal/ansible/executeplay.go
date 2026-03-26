@@ -1,5 +1,5 @@
 /*
-Copyright © 2026 Julian Easterling <julian@julianscorner.com>
+Copyright © 2026 Julian Easterling julian@julianscorner.com
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,17 +13,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package ansible
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 )
 
-func ExecuteRunbook(play Play) error {
+// ExecutePlay runs the ansible-playbook command using the temporary playbook
+// located at ".tmp/play.yml". Command-line flags are derived from the fields
+// of the supplied Play struct. If an "ansible.log" file exists it is removed
+// before execution. An error is returned if the log cannot be removed or if
+// ansible-playbook exits with a non-zero status.
+func ExecutePlay(play Play) error {
 	var param []string
+
+	if len(play.Tags) > 0 {
+		param = append(param, "--tags")
+		param = append(param, strings.Join(play.Tags, ","))
+	}
 
 	if play.FlushCache {
 		param = append(param, "--flush-cache")
@@ -41,13 +54,21 @@ func ExecuteRunbook(play Play) error {
 		param = append(param, "--step")
 	}
 
-	param = append(param, "playbooks/runbook.yml")
+	param = append(param, ".tmp/play.yml")
 
 	if filesystem.FileExists("ansible.log") {
-		if err := os.Remove("ansible.log"); err != nil {
-			return err
+		err := os.Remove("ansible.log")
+		if err != nil {
+			return fmt.Errorf("can't remove ansible.log: %v", err)
 		}
 	}
 
-	return execute.ExternalProgram("ansible-playbook", param...)
+	if filesystem.FileExists(".tmp/play.yml") {
+		err := execute.ExternalProgram("ansible-playbook", param...)
+		if err != nil {
+			return fmt.Errorf("can't execute playbook: %v", err)
+		}
+	}
+
+	return nil
 }

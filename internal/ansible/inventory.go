@@ -13,41 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package ansible
 
-import (
-	"errors"
-	"strings"
-
-	"gopkg.in/ini.v1"
-)
-
+// Inventory represents a single host entry from the Ansible inventory file.
+// Name is the short hostname (the first whitespace-delimited token on the
+// line) and Address is the value associated with that key in the INI section.
 type Inventory struct {
 	Name    string
 	Address string
-}
-
-func GetInventory() ([]Inventory, error) {
-	inv, err := ini.Load("hosts.ini")
-	if err != nil {
-		return []Inventory{}, err
-	}
-
-	section, err := inv.GetSection("vagrant")
-	if err != nil {
-		return []Inventory{}, errors.New("can't find the 'vagrant' section in the hosts.ini file")
-	}
-
-	inventory := []Inventory{}
-
-	for _, vm := range section.KeyStrings() {
-		i := Inventory{
-			Name:    strings.Split(vm, " ")[0],
-			Address: section.Key(vm).String(),
-		}
-
-		inventory = append(inventory, i)
-	}
-
-	return inventory, nil
 }
