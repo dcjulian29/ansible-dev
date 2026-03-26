@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package collection
 
 import (
@@ -27,11 +28,32 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+// purgeCmd creates the Cobra command for "ansible-dev collection purge",
+// which deletes all installed Ansible collection files from the development
+// environment.
+//
+// The command reads the "collections_path" key from the [defaults] section
+// of ansible.cfg, appends the standard "ansible_collections" subdirectory,
+// and recursively removes that directory tree. A confirmation message is
+// printed to stdout on success.
+//
+// Note: despite the Use string showing "<collection>", this command does
+// not accept a positional argument — it unconditionally purges the entire
+// ansible_collections directory.
+//
+// An error is returned if:
+//   - ansible.cfg cannot be loaded or is missing the [defaults] section.
+//   - The "collections_path" key is not defined.
+//   - The ansible_collections directory does not exist.
+//   - The directory cannot be removed.
+//
+// A PreRunE hook calls [ansible.EnsureAnsibleDirectory] to verify the
+// current directory is a valid Ansible project.
 func purgeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "purge <collection>",
 		Short: "Purge all Ansible collection files from the development environment",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			cfg, err := ini.Load("ansible.cfg")
 			if err != nil {
 				return err
@@ -61,7 +83,7 @@ func purgeCmd() *cobra.Command {
 
 			return nil
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return ansible.EnsureAnsibleDirectory()
 		},
 	}

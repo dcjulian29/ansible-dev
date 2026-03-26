@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package role
 
 import (
@@ -29,11 +30,44 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// compareCmd creates the Cobra command for "ansible-dev role compare",
+// which compares each installed role in the development environment against
+// its upstream source in the canonical Ansible roles repository.
+//
+// The command determines paths from two sources:
+//   - The local roles directory is resolved via [ansible.RootRoleFolder]
+//     (the "roles_path" setting in ansible.cfg) relative to the current
+//     working directory.
+//   - The upstream repository directory is read from the ANSIBLE_ROLES
+//     environment variable. An error is returned if this variable is not
+//     set.
+//
+// For each subdirectory in the local roles path, the command looks for a
+// matching directory in ANSIBLE_ROLES (falling back to a name with the
+// "dcjulian29." prefix stripped). If a match is found, it performs a
+// file-by-file hash comparison, excluding .git, .github,
+// .galaxy_install_info, and .ansible paths.
+//
+// When differences are detected the command opens a graphical diff tool:
+//   - Windows: WinMerge (C:\Program Files\WinMerge\winmergeu.exe) with
+//     recursive comparison and the "AnsibleRoles" file filter.
+//   - Linux/macOS: Meld (/usr/bin/meld).
+//
+// Flags:
+//   - --checksum:  print per-file hash comparisons to stdout. Matching
+//     files are shown in green; differing files are shown in red
+//     (default false).
+//   - --no-diff:   skip launching the graphical diff tool even when
+//     differences are detected (default false). Useful for CI or when
+//     only checksum output is desired.
+//
+// A PreRunE hook calls [ansible.EnsureAnsibleDirectory] to verify the
+// current directory is a valid Ansible project.
 func compareCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "compare",
 		Short: "Compare Installed Ansible roles with the development environment",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			checksum, _ := cmd.Flags().GetBool("checksum")
 			nodiff, _ := cmd.Flags().GetBool("no-diff")
 			sep := string(os.PathSeparator)
@@ -161,7 +195,7 @@ func compareCmd() *cobra.Command {
 
 			return nil
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return ansible.EnsureAnsibleDirectory()
 		},
 	}

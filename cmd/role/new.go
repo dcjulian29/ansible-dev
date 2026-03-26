@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package role
 
 import (
@@ -23,6 +24,34 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// newCmd creates the Cobra command for "ansible-dev role new", which
+// scaffolds a new Ansible role in the development environment using
+// [ansible.NewRole] (typically backed by "ansible-galaxy role init").
+//
+// Usage:
+//
+//	ansible-dev role new <role> [flags]
+//
+// The positional argument <role> is the name of the role to create (e.g.
+// "dcjulian29.nginx"). If a role directory already exists at the resolved
+// path (checked via [ansible.RoleFolderExists]):
+//   - Without --force: the command returns an error prompting the user
+//     to pass --force to replace the existing role.
+//   - With --force: the existing directory is removed via
+//     [filesystem.RemoveDirectory] before the new role is scaffolded.
+//
+// If no argument is supplied, the help text is displayed instead.
+//
+// Flags:
+//   - --force, -f:   force overwrite of an existing role directory.
+//     When set, the current role folder is deleted before
+//     scaffolding (default false).
+//   - --verbose, -v: forward the verbose flag to [ansible.NewRole] so
+//     that ansible-galaxy prints additional debug messages during
+//     initialization (default false).
+//
+// A PreRunE hook calls [ansible.EnsureAnsibleDirectory] to verify the
+// current directory is a valid Ansible project.
 func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <role>",
@@ -51,7 +80,7 @@ func newCmd() *cobra.Command {
 
 			return ansible.NewRole(role, verbose)
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return ansible.EnsureAnsibleDirectory()
 		},
 	}

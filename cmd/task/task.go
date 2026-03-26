@@ -13,6 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+// Package task implements the "ansible-dev tasks" command, which lists
+// all tasks that would be executed for a given Ansible role, optionally
+// filtered by tags.
 package task
 
 import (
@@ -25,6 +29,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewCommand creates and returns the Cobra command for "ansible-dev tasks",
+// which lists every task that would be executed for the specified Ansible
+// role. The command requires exactly one positional argument.
+//
+// Usage:
+//
+//	ansible-dev tasks <role> [flags]
+//
+// The positional argument <role> is the name of the role to inspect (e.g.
+// "dcjulian29.docker"). The command proceeds in two steps:
+//
+//  1. Generate a temporary playbook — calls [ansible.GenerateRolePlay]
+//     to create a minimal playbook at .tmp/play.yml that includes only
+//     the specified role.
+//
+//  2. List tasks — invokes "ansible-playbook --list-tasks .tmp/play.yml"
+//     to parse the generated playbook and print all tasks it would
+//     execute. When the --tags flag is provided, the "--tags" argument
+//     is prepended so that only tasks matching the specified tags are
+//     shown.
+//
+// Flags:
+//   - --tags: a comma-separated list of tag values used to filter the
+//     output to only plays and tasks tagged with those values
+//     (default empty). May also be specified multiple times.
+//
+// This command complements "ansible-dev tags", which lists available tag
+// names. Use "tags" to discover tags, then "tasks --tags <tag>" to
+// preview which tasks a filtered run would execute.
+//
+// A PreRunE hook performs two checks before execution:
+//  1. [ansible.EnsureAnsibleDirectory] — verifies the current directory
+//     is a valid Ansible project. Returns a simplified "not an Ansible
+//     development directory" message on failure.
+//  2. [vagrant.EnsureVagrantfile] — confirms a Vagrantfile is present.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tasks <role>",
@@ -58,7 +97,7 @@ func NewCommand() *cobra.Command {
 
 			return nil
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if err := ansible.EnsureAnsibleDirectory(); err != nil {
 				return errors.New("not an Ansible development directory")
 			}

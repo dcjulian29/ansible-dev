@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package collection
 
 import (
@@ -23,6 +24,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// removeCmd creates the Cobra command for "ansible-dev collection remove",
+// which removes a named Ansible collection from the requirements.yml file.
+//
+// Usage:
+//
+//	ansible-dev collection remove <collection>
+//
+// The positional argument <collection> is matched against the Name field of
+// each [ansible.Collection] entry in requirements.yml. If a match is found,
+// the entry is removed and the updated requirements are written back to
+// disk via [ansible.SaveRequirements]. A confirmation message is printed to
+// stdout on success.
+//
+// If no argument is supplied, the help text is displayed. If the named
+// collection is not present in requirements.yml, an error is returned.
+//
+// Note: this command only modifies requirements.yml — it does not
+// uninstall the collection files from the collections_path. Use
+// "ansible-dev collection purge" to remove installed artifacts.
+//
+// A PreRunE hook calls [ansible.EnsureAnsibleDirectory] to verify the
+// current directory is a valid Ansible project.
 func removeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove <collection>",
@@ -56,7 +79,7 @@ func removeCmd() *cobra.Command {
 
 			return fmt.Errorf("collection '%s' not present", collection)
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return ansible.EnsureAnsibleDirectory()
 		},
 	}

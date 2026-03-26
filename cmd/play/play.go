@@ -13,6 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+// Package play implements the "ansible-dev play" command, which provisions
+// a single Ansible role against the Vagrant development environment by
+// generating a temporary playbook and executing it via ansible-playbook.
 package play
 
 import (
@@ -25,6 +29,39 @@ import (
 
 var playFromFlags ansible.Play
 
+// NewCommand creates and returns the Cobra command for "ansible-dev play".
+//
+// Usage:
+//
+//	ansible-dev play <role> [flags]
+//
+// The command requires exactly one positional argument — the name of the
+// Ansible role to apply. It generates a temporary single-role playbook via
+// [ansible.GenerateRolePlay] and then executes it via [ansible.ExecutePlay].
+//
+// Flags are mapped to [ansible.Play] fields as follows:
+//   - --tags:                 comma-separated list of Ansible tags to
+//     selectively run tasks (maps to [ansible.Play.Tags]).
+//   - --ask-vault-password:   prompt for the Ansible Vault password
+//     (maps to [ansible.Play.AskVaultPass]).
+//   - --ask-become-password:  prompt for the privilege escalation password
+//     (maps to [ansible.Play.AskBecomePass]).
+//   - --flush-cache:          clear the Ansible fact cache before the run
+//     (maps to [ansible.Play.FlushCache]).
+//   - --step, -s:             confirm each task before running
+//     (maps to [ansible.Play.Step]).
+//   - --verbose, -v:          enable verbose ansible-playbook output
+//     (maps to [ansible.Play.Verbose]).
+//
+// A PreRunE hook validates the environment with two checks:
+//  1. [ansible.EnsureAnsibleDirectory] confirms ansible.cfg is present.
+//     A custom error message ("not an Ansible development directory") is
+//     returned on failure.
+//  2. [vagrant.EnsureVagrantfile] confirms a Vagrantfile is present.
+//
+// An error is returned if either pre-flight check fails, the temporary
+// playbook cannot be generated, or ansible-playbook exits with a non-zero
+// status.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "play <role>",
@@ -50,7 +87,7 @@ func NewCommand() *cobra.Command {
 
 			return nil
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if err := ansible.EnsureAnsibleDirectory(); err != nil {
 				return errors.New("not an Ansible development directory")
 			}

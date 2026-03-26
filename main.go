@@ -13,6 +13,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+// ansible-dev is a CLI tool that streamlines Ansible role and playbook
+// development inside Vagrant-based environments. It wraps common
+// ansible-galaxy, ansible-playbook, and Vagrant workflows behind a
+// single, ergonomic command-line interface built with Cobra.
+//
+// Usage:
+//
+//	ansible-dev <command> [flags]
+//
+// Run "ansible-dev --help" for the full list of available commands.
 package main
 
 import "github.com/dcjulian29/ansible-dev/cmd"

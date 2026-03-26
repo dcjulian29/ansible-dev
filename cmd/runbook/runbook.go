@@ -13,6 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+// Package runbook implements the "ansible-dev runbook" command, which
+// executes the project's fixed runbook playbook against the Vagrant
+// development environment.
 package runbook
 
 import (
@@ -23,11 +27,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewCommand creates and returns the Cobra command for "ansible-dev runbook",
+// which runs the project's runbook playbook against the Vagrant-managed
+// development hosts via [ansible.ExecuteRunbook].
+//
+// The command constructs an [ansible.Play] with the name "Runbook" and
+// populates its execution options from the provided flags. The vault
+// password prompt is explicitly disabled (AskVaultPass = false).
+//
+// Flags:
+//   - --verbose, -v:          tell Ansible to print more debug messages
+//     (default false). Maps to [ansible.Play.Verbose].
+//   - --ask-become-password:  prompt for the privilege escalation (sudo)
+//     password at runtime (default false). Maps to
+//     [ansible.Play.AskBecomePass].
+//   - --flush-cache:          clear the fact cache for every host in the
+//     inventory before execution (default false). Maps to
+//     [ansible.Play.FlushCache].
+//   - --step, -s:             run in one-step-at-a-time mode, confirming
+//     each task before it executes (default false). Maps to
+//     [ansible.Play.Step].
+//
+// A PreRunE hook performs two checks before execution:
+//  1. [ansible.EnsureAnsibleDirectory] — verifies the current directory
+//     is a valid Ansible project. Returns a simplified "not an Ansible
+//     development directory" message on failure.
+//  2. [vagrant.EnsureVagrantfile] — confirms a Vagrantfile is present,
+//     since the runbook targets Vagrant-managed hosts.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "runbook",
 		Short: "Run ansible runbook in the Ansible development vagrant environment",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			play := ansible.Play{
 				Name: "Runbook",
 			}
@@ -44,7 +75,7 @@ func NewCommand() *cobra.Command {
 
 			return nil
 		},
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if err := ansible.EnsureAnsibleDirectory(); err != nil {
 				return errors.New("not an Ansible development directory")
 			}
