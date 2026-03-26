@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package vagrant
 
 import (
@@ -20,6 +21,18 @@ import (
 	"github.com/dcjulian29/go-toolbox/filesystem"
 )
 
+// Destroy tears down the Vagrant environment and removes all local
+// artifacts produced during a development session. It performs the
+// following steps in order:
+//
+//  1. Runs "vagrant destroy --force" to stop and delete all managed VMs.
+//  2. Removes the "ansible.log" file created by ansible-playbook runs.
+//  3. Removes the ".vagrant" directory that stores Vagrant machine state.
+//  4. Removes the ".tmp" directory used for generated playbook files
+//     (see [ansible.GenerateRolePlay] and [ansible.GeneratePlaybookPlay]).
+//
+// Execution stops and the first encountered error is returned if any step
+// fails. A nil return indicates the environment was fully cleaned up.
 func Destroy() error {
 	param := []string{"destroy", "--force"}
 

@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package vagrant
 
 import (
@@ -21,6 +22,12 @@ import (
 	"github.com/dcjulian29/go-toolbox/filesystem"
 )
 
+// EnsureVagrantfile verifies that a Vagrantfile exists in the current
+// working directory. It is intended as a pre-flight guard for any operation
+// that requires a Vagrant environment (e.g. [Up], [Down], [Destroy],
+// [Upgrade]).
+//
+// A non-nil error is returned if the file is missing.
 func EnsureVagrantfile() error {
 	if !filesystem.FileExists("Vagrantfile") {
 		return errors.New("can't find the Vagrantfile")

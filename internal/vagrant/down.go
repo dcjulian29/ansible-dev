@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package vagrant
 
 import (
@@ -24,6 +25,18 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+// Down gracefully stops every Vagrant VM listed in the [vagrant] section of
+// the local hosts.ini inventory file by running "vagrant halt <name>" for
+// each entry.
+//
+// Host names are extracted from the INI keys by taking the first
+// whitespace-delimited token (matching the convention used by
+// [ansible.GetInventory]). A yellow status line is printed to stdout before
+// each VM is halted.
+//
+// An error is returned if hosts.ini cannot be loaded, the [vagrant] section
+// is missing, or any individual "vagrant halt" invocation fails. Execution
+// stops at the first failure, leaving remaining VMs in their current state.
 func Down() error {
 	inv, err := ini.Load("hosts.ini")
 	if err != nil {
