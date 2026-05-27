@@ -25,8 +25,7 @@ import (
 )
 
 // newCmd creates the Cobra command for "ansible-dev role new", which
-// scaffolds a new Ansible role in the development environment using
-// [ansible.NewRole] (typically backed by "ansible-galaxy role init").
+// scaffolds a new Ansible role (typically backed by "ansible-galaxy role init").
 //
 // Usage:
 //
@@ -49,9 +48,6 @@ import (
 //   - --verbose, -v: forward the verbose flag to [ansible.NewRole] so
 //     that ansible-galaxy prints additional debug messages during
 //     initialization (default false).
-//
-// A PreRunE hook calls [ansible.EnsureAnsibleDirectory] to verify the
-// current directory is a valid Ansible project.
 func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <role>",
@@ -79,9 +75,6 @@ func newCmd() *cobra.Command {
 			verbose, _ := cmd.Flags().GetBool("verbose")
 
 			return ansible.NewRole(role, verbose)
-		},
-		PreRunE: func(_ *cobra.Command, _ []string) error {
-			return ansible.EnsureAnsibleDirectory()
 		},
 	}
 
