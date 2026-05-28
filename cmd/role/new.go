@@ -76,6 +76,9 @@ func newCmd() *cobra.Command {
 
 			return ansible.NewRole(role, verbose)
 		},
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			return ansible.EnsureAnsibleDirectory()
+		},
 	}
 
 	cmd.Flags().BoolP("force", "f", false, "force overwriting an existing role")
