@@ -79,7 +79,7 @@ func NewCommand() *cobra.Command {
 			}
 
 			for _, host := range inventory {
-				if err := vagrant.Up(host.Name, host.Address); err != nil {
+				if err := vagrant.Up(host.Name); err != nil {
 					return err
 				}
 			}
@@ -94,6 +94,10 @@ func NewCommand() *cobra.Command {
 		PreRunE: func(_ *cobra.Command, _ []string) error {
 			if err := ansible.EnsureAnsibleDirectory(); err != nil {
 				return errors.New("not an Ansible development directory")
+			}
+
+			if err := ansible.EnsureHostsIni(); err != nil {
+				return err
 			}
 
 			return vagrant.EnsureVagrantfile()

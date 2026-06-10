@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/dcjulian29/ansible-dev/internal/ansible"
 	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/spf13/cobra"
@@ -83,6 +84,10 @@ func NewCommand() *cobra.Command {
 
 			fmt.Println("  ...  collections/")
 			if err := filesystem.EnsureDirectoryExist("collections"); err != nil {
+				return err
+			}
+
+			if err := gitIgnore(); err != nil {
 				return err
 			}
 
@@ -194,6 +199,30 @@ skip_list:
 	return nil
 }
 
+// gitIgnore creates the ".gitignore" file for the development environment.
+// It excludes runtime-modified and generated files that should not be
+// committed: hosts.ini (rewritten on every vagrant up by ansible-dev),
+// ansible.log, .vagrant/, .tmp/, and other build-time Ansible directories.
+func gitIgnore() error {
+	fmt.Println(" ... .gitignore")
+
+	content := []byte(`.vagrant/
+.ansible/
+.tmp/
+.vagrant/
+ansible.log
+collections/
+hosts.ini
+roles/
+`)
+
+	if err := filesystem.EnsureFileExist(".gitignore", content); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // groupVariables creates the "group_vars/" directory and a starter
 // "group_vars/vagrant.yml" file containing a placeholder variable. The
 // file applies to all hosts in the [vagrant] inventory group.
@@ -257,22 +286,7 @@ func hostVariables() error {
 func inventoryFile() error {
 	fmt.Println("  ...  hosts.ini")
 
-	content := []byte(`[vagrant]
-debian ansible_host=192.168.57.5
-alma ansible_host=192.168.57.6
-
-[all:vars]
-ansible_user=vagrant
-ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o CheckHostIP=no'
-ansible_port=22
-ansible_ssh_private_key_file=~/.ssh/insecure_private_key
-`)
-
-	if err := filesystem.EnsureFileExist("hosts.ini", content); err != nil {
-		return err
-	}
-
-	return nil
+	return ansible.EnsureHostsIni()
 }
 
 // runbook creates the "playbooks/" directory and a skeleton runbook
@@ -393,33 +407,65 @@ ignore-from-file:
 func vagrantFile() error {
 	fmt.Println("  ...  Vagrantfile")
 
-	content := []byte(`Vagrant.configure("2") do |config|
+	content := []byte(`VM_CPUS   = 2
+VM_MEMORY = 4096
+
+host = Vagrant::Util::Platform.platform
+
+if host =~ /mswin|mingw|cygwin/
+  hyperv_available = File.exist?("C:/Windows/System32/vmms.exe")
+  ENV["VAGRANT_DEFAULT_PROVIDER"] ||= (hyperv_available ? "hyperv" : "virtualbox")
+elsif host =~ /linux/
+  libvirt_ok = system("virsh --version >/dev/null 2>&1")
+  ENV["VAGRANT_DEFAULT_PROVIDER"] ||= (libvirt_ok ? "libvirt" : "virtualbox")
+else
+  ENV["VAGRANT_DEFAULT_PROVIDER"] ||= "virtualbox"
+end
+
+Vagrant.configure("2") do |config|
   config.ssh.insert_key = false
   if Vagrant.has_plugin?("vagrant-vbguest")
     config.vbguest.auto_update = false
   end
-    config.vm.boot_timeout = 600
-    config.vm.box_check_update = true
-  config.vm.provision "ping", type: "shell", inline: "ping -c 1 192.168.57.1", run: "always"
+  config.vm.boot_timeout = 3600
+  config.vm.box_check_update = true
   config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  if ENV["VAGRANT_DEFAULT_PROVIDER"] == "hyperv"
+    config.vm.network "public_network", bridge: "Default Switch"
+  end
+
   config.vm.provider "virtualbox" do |vb|
-    vb.gui = false
-    vb.cpus = 4
-    vb.memory = 4096
+    vb.gui    = false
+    vb.cpus   = VM_CPUS
+    vb.memory = VM_MEMORY
     vb.check_guest_additions = false
     vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
-    vb.customize [ "modifyvm", :id, "--graphicscontroller", "vmsvga"]
-    vb.customize [ "modifyvm", :id, "--ioapic", "on"]
+    vb.customize [ "modifyvm", :id, "--graphicscontroller", "vmsvga" ]
+    vb.customize [ "modifyvm", :id, "--ioapic", "on" ]
   end
+
+  config.vm.provider "hyperv" do |hv|
+    hv.cpus   = VM_CPUS
+    hv.memory = VM_MEMORY
+    hv.enable_enhanced_session_mode = false
+    hv.auto_start_action = "Nothing"
+  end
+
+  config.vm.provider "libvirt" do |lv|
+    lv.cpus   = VM_CPUS
+    lv.memory = VM_MEMORY
+    lv.driver = "kvm"
+  end
+
   config.vm.define "debian" do |c|
-    c.vm.box = "debian/bookworm64"
+    c.vm.box      = "dcjulian29/debian-13"
     c.vm.hostname = "debian.dev"
-    c.vm.network "private_network", ip: "192.168.57.5"
   end
+
   config.vm.define "alma" do |c|
-    c.vm.box = "almalinux/10"
+    c.vm.box      = "dcjulian29/almalinux-10"
     c.vm.hostname = "alma.dev"
-    c.vm.network "private_network", ip: "192.168.57.6"
   end
 end
 `)
