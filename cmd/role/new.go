@@ -18,8 +18,10 @@ package role
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/spf13/cobra"
 )
@@ -41,13 +43,25 @@ import (
 //
 // If no argument is supplied, the help text is displayed instead.
 //
+// After scaffolding, the ansible-galaxy "tests" folder is removed and the
+// embedded role template (LICENSE, README, lint configuration, GitHub
+// workflows, meta/main.yml, ...) is overlaid with !!ROLE_NAME!! / !!ROLE_DESC!!
+// substituted. When --publish is set, the role is additionally copied to the
+// directory named by the ANSIBLE_ROLES environment variable, committed to a new
+// git repository, pushed to a freshly-created public GitHub repository, and
+// recorded in requirements.yml.
+//
 // Flags:
-//   - --force, -f:   force overwrite of an existing role directory.
+//   - --force, -f:       force overwrite of an existing role directory.
 //     When set, the current role folder is deleted before
 //     scaffolding (default false).
-//   - --verbose, -v: forward the verbose flag to [ansible.NewRole] so
+//   - --verbose, -v:     forward the verbose flag to [ansible.NewRole] so
 //     that ansible-galaxy prints additional debug messages during
 //     initialization (default false).
+//   - --description, -d: description text substituted for !!ROLE_DESC!! in
+//     the template and used for the published repository (default empty).
+//   - --publish, -p:     create and push a public GitHub repository for the
+//     role via git and gh, then add it to requirements.yml (default false).
 func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <role>",
@@ -74,7 +88,50 @@ func newCmd() *cobra.Command {
 
 			verbose, _ := cmd.Flags().GetBool("verbose")
 
-			return ansible.NewRole(role, verbose)
+			if err := ansible.NewRole(role, verbose); err != nil {
+				return err
+			}
+
+			// ansible-galaxy init creates a "tests" folder that is not wanted
+			// in the published role, so remove it before overlaying templates.
+			tests := filepath.Join(folder, "tests")
+			if filesystem.DirectoryExists(tests) {
+				if err := filesystem.RemoveDirectory(tests); err != nil {
+					return err
+				}
+			}
+
+			description, _ := cmd.Flags().GetString("description")
+
+			if err := ansible.ApplyRoleTemplate(folder, role, description); err != nil {
+				return err
+			}
+
+			publish, _ := cmd.Flags().GetBool("publish")
+			if !publish {
+				return nil
+			}
+
+			if err := ansible.PublishRole(folder, role, description); err != nil {
+				return err
+			}
+
+			base := ansible.BaseRoleName(role)
+
+			requirements, _ := ansible.ReadRequirements()
+			requirements.Roles = append(requirements.Roles, ansible.Role{
+				Name:   role,
+				Source: fmt.Sprintf("https://github.com/dcjulian29/ansible-role-%s.git", base),
+			})
+
+			if err := ansible.SaveRequirements(requirements); err != nil {
+				return err
+			}
+
+			msg := fmt.Sprintf("role '%s' published and added to requirements.yml", role)
+			fmt.Println(color.Info(msg))
+
+			return nil
 		},
 		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return ansible.EnsureAnsibleDirectory()
@@ -83,6 +140,8 @@ func newCmd() *cobra.Command {
 
 	cmd.Flags().BoolP("force", "f", false, "force overwriting an existing role")
 	cmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
+	cmd.Flags().StringP("description", "d", "", "description of the role (fills the template)")
+	cmd.Flags().BoolP("publish", "p", false, "create and push a public GitHub repository for the role")
 
 	return cmd
 }

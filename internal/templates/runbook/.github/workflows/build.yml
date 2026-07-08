@@ -1,0 +1,73 @@
+---
+name: Workflow CI
+
+'on':
+  push:
+
+  pull_request:
+
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: "3.14"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: |
+          python3 -m pip install pip
+          pip3 install yamllint
+
+      - run: yamllint .
+
+      - run: pip3 install ansible ansible-lint
+
+      - run: ansible-lint .
+
+  release:
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    name: Release Runbook
+    needs: [lint]
+    runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: "3.14"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: |
+          python3 -m pip install pip
+          pip3 install yamllint
+
+      - run: yamllint .
+
+      - run: pip3 install ansible ansible-lint
+
+      - run: ansible-lint .
+
+      - run: ansible-galaxy collection build
+
+      - id: vars
+        run: echo "version=$(echo ${GITHUB_REF} | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dcjulian29-!!RUNBOOK_NAME!!-${{ steps.vars.outputs.version }}.tar.gz
+          tag_name: ${{ steps.vars.outputs.version }}
+          token: ${{ github.token }}
+          draft: false
+          name: ${{ steps.vars.outputs.version }}
+          prerelease: false

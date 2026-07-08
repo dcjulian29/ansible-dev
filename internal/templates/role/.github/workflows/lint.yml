@@ -1,0 +1,31 @@
+---
+name: Ansible Lint
+'on':
+  push:
+
+  pull_request:
+
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: "3.14"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: |
+          python3 -m pip install pip
+          pip3 install yamllint
+
+      - run: yamllint .
+
+      - run: pip3 install ansible ansible-lint
+
+      - run: ansible-lint .

@@ -1,0 +1,25 @@
+---
+authors: ["Julian Easterling"]
+build_ignore:
+  - .devcontainer
+  - README.md
+  - build.cmd
+  - .gitignore
+  - .vscode
+  - .github
+  - .ansible-lint
+  - .gitattributes
+  - .yamllint
+  - .editorconfig
+description: Runbook that will !!RUNBOOK_DESC!!
+homepage: https://github.com/dcjulian29/ansible-runbook-!!RUNBOOK_NAME!!
+issues: https://github.com/dcjulian29/ansible-runbook-!!RUNBOOK_NAME!!/issues
+license: ["Apache-2.0"]
+name: !!RUNBOOK_NAME!!
+namespace: dcjulian29
+readme: https://github.com/dcjulian29/ansible-runbook-!!RUNBOOK_NAME!!/blob/main/README.md
+repository: https://github.com/dcjulian29/ansible-runbook-!!RUNBOOK_NAME!!
+tags:
+  - !!RUNBOOK_NAME!!
+  - dcjulian29
+version: 0.9.0
