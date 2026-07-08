@@ -1,0 +1,11 @@
+---
+skip_list: [ ]
+
+warn_list:
+  - experimental
+
+kinds:
+  - playbook: "playbook.yml"
+  - yaml: "**/*.{yml,yaml}"
+
+verbosity: 1

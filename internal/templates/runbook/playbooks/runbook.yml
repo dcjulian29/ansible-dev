@@ -1,0 +1,13 @@
+---
+- name: Runbook that will !!RUNBOOK_DESC!!
+  any_errors_fatal: true
+  become: true
+  gather_facts: false
+  hosts: all
+
+  vars:
+    name: value
+
+  handlers:
+
+  tasks:
