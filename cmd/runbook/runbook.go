@@ -89,5 +89,7 @@ func NewCommand() *cobra.Command {
 	cmd.Flags().Bool("flush-cache", false, "clear the fact cache for every host in inventory")
 	cmd.Flags().BoolP("step", "s", false, "one-step-at-a-time: confirm each task before running")
 
+	cmd.AddCommand(newCmd())
+
 	return cmd
 }
