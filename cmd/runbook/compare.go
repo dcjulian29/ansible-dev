@@ -17,13 +17,14 @@ limitations under the License.
 package runbook
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/settings"
+	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
@@ -32,20 +33,21 @@ import (
 // compareCmd creates the Cobra command for "ansible-dev runbook compare", the
 // runbook analogue of "role compare". Where role compare walks the local roles
 // directory, runbook compare is driven from the source side: it walks each
-// runbook repository under the ANSIBLE_RUNBOOKS environment variable and
-// compares it against the collection installed in the current project.
+// runbook repository under the configured runbooks_path (see "ansible-dev
+// config runbooks-path") and compares it against the collection installed in
+// the current project.
 //
 // For each runbook directory it reads galaxy.yml to obtain the namespace and
 // name (so no namespace is hard-coded), locates the installed collection at
 // <collections_path>/ansible_collections/<namespace>/<name>, and delegates the
 // file-by-file hash comparison to [ansible.ComparePair].
 //
-// The ignore set is a fixed list that mirrors the WinMerge "AnsibleRunbooks"
-// file filter, so the checksum comparison and the visual diff exclude the same
-// files: the source repo's SCM and per-repo files (which galaxy strips on
-// build, e.g. galaxy.yml, README.md, .devcontainer) and the installed copy's
-// runtime artifacts (MANIFEST.json, FILES.json). Runbooks present in
-// ANSIBLE_RUNBOOKS but not installed are reported and skipped.
+// The ignore set is the configured runbook_ignore list (nothing is excluded
+// when it is empty). To keep the checksum comparison and the visual diff in
+// agreement, configure it to match the diff tool's filter — for example the
+// source repo's SCM/per-repo files (galaxy.yml, README.md, .devcontainer) and
+// the installed copy's runtime artifacts (MANIFEST.json, FILES.json). Runbooks
+// present under runbooks_path but not installed are reported and skipped.
 //
 // Flags:
 //   - --checksum: print per-file hash comparisons.
@@ -63,9 +65,31 @@ func compareCmd() *cobra.Command {
 			sep := string(os.PathSeparator)
 			pwd, _ := os.Getwd()
 
-			runbooksFolder := strings.ReplaceAll(os.Getenv("ANSIBLE_RUNBOOKS"), "\\", sep)
-			if len(runbooksFolder) == 0 {
-				return errors.New("the Ansible runbooks directory is not defined in environment")
+			runbooksPath, err := settings.RunbooksPath()
+			if err != nil {
+				return err
+			}
+
+			runbooksFolder := strings.ReplaceAll(runbooksPath, "\\", sep)
+
+			ignored, err := settings.RunbookIgnore()
+			if err != nil {
+				return err
+			}
+
+			var launch func(left, right string) error
+
+			if !nodiff {
+				diff, err := settings.Diff()
+				if err != nil {
+					return err
+				}
+
+				launch = func(left, right string) error {
+					program, args := diff.Command(diff.RunbookFilter, left, right)
+
+					return execute.ExternalProgram(program, args...)
+				}
 			}
 
 			collections, err := ansible.CollectionsFolder()
@@ -86,29 +110,6 @@ func compareCmd() *cobra.Command {
 			}
 
 			home := ansible.HomeFolder()
-
-			// This list mirrors the WinMerge "AnsibleRunbooks" file filter so
-			// that the checksum comparison and the visual diff agree on what to
-			// exclude: the source repo's SCM and per-repo files (which galaxy
-			// strips on build) and the installed copy's runtime artifacts
-			// (galaxy.yml is replaced by MANIFEST.json / FILES.json on install).
-			ignored := []string{
-				".ansible-lint",
-				".editorconfig",
-				".gitattributes",
-				".gitignore",
-				".yamllint",
-				"build.cmd",
-				"FILES.json",
-				"galaxy.yml",
-				"MANIFEST.json",
-				"README.md",
-				".tar.gz",
-				".devcontainer",
-				".git",
-				".github",
-				".vscode",
-			}
 
 			for _, e := range entries {
 				if !e.IsDir() {
@@ -133,7 +134,7 @@ func compareCmd() *cobra.Command {
 				}
 
 				if _, err := ansible.ComparePair(
-					installedEntry, sourceEntry, ignored, checksum, nodiff, "AnsibleRunbooks", home,
+					installedEntry, sourceEntry, ignored, checksum, nodiff, launch, home,
 				); err != nil {
 					return err
 				}
