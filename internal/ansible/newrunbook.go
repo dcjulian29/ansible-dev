@@ -42,7 +42,7 @@ func NewRunbook(name, description string) (string, error) {
 
 	dest := filepath.Join(strings.ReplaceAll(runbooks, "\\", string(os.PathSeparator)), name)
 
-	if filesystem.DirectoryExists(dest) {
+	if filesystem.DirectoryExist(dest) {
 		return "", fmt.Errorf("runbook already exists at '%s'", dest)
 	}
 

@@ -3,7 +3,7 @@ module github.com/dcjulian29/ansible-dev
 go 1.25.0
 
 require (
-	github.com/dcjulian29/go-toolbox v0.14.1
+	github.com/dcjulian29/go-toolbox v0.31.1
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/spf13/cobra v1.10.2
 	go.szostok.io/version v1.2.0
@@ -45,5 +45,5 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 )

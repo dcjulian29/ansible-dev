@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -73,7 +73,7 @@ func removeCmd() *cobra.Command {
 				}
 
 				msg := fmt.Sprintf("collection '%s' removed from requirements.yml", collection)
-				fmt.Println(color.Info(msg))
+				fmt.Println(textformat.Info(msg))
 				return nil
 			}
 

@@ -28,5 +28,5 @@ func RoleFolderExists(role string) bool {
 		return false
 	}
 
-	return filesystem.DirectoryExists(folder)
+	return filesystem.DirectoryExist(folder)
 }

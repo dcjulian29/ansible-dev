@@ -24,9 +24,9 @@ import (
 	"strings"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -110,10 +110,10 @@ func compareCmd() *cobra.Command {
 				workingEntry = strings.ReplaceAll(workingEntry, "\\./", sep)
 				repoEntry := strings.Replace(workingFolder, workingFolder, repoFolder+sep+e.Name(), 1)
 
-				if !filesystem.DirectoryExists(repoEntry) {
+				if !filesystem.DirectoryExist(repoEntry) {
 					repoEntry = strings.Replace(repoEntry, "dcjulian29.", "", 1)
 
-					if !filesystem.DirectoryExists(repoEntry) {
+					if !filesystem.DirectoryExist(repoEntry) {
 						repoEntry = ""
 					}
 				}
@@ -146,14 +146,14 @@ func compareCmd() *cobra.Command {
 
 						var h1, h2 string
 
-						if filesystem.FileExists(f) {
+						if filesystem.FileExist(f) {
 							h1, err = filesystem.FileHash(f)
 							if err != nil {
 								return err
 							}
 						}
 
-						if filesystem.FileExists(f2) {
+						if filesystem.FileExist(f2) {
 							h2, err = filesystem.FileHash(f2)
 							if err != nil {
 								return err
@@ -167,9 +167,9 @@ func compareCmd() *cobra.Command {
 						if checksum {
 							file := strings.Replace(f, workingEntry+sep, "", 1)
 							if h1 == h2 {
-								fmt.Println(color.Green(fmt.Sprintf("%s: %s == %s", file, h1, h2)))
+								fmt.Println(textformat.Green(fmt.Sprintf("%s: %s == %s", file, h1, h2)))
 							} else {
-								fmt.Println(color.Red(fmt.Sprintf("%s: %s != %s\n", file, h1, h2)))
+								fmt.Println(textformat.Red(fmt.Sprintf("%s: %s != %s\n", file, h1, h2)))
 							}
 						}
 					}

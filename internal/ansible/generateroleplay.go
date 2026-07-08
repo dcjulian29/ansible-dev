@@ -29,14 +29,14 @@ import (
 // targets the "all" host group. An error is returned if the ".tmp" directory
 // cannot be created or the file cannot be written.
 func GenerateRolePlay(roleName string) error {
-	if !filesystem.DirectoryExists(".tmp") {
+	if !filesystem.DirectoryExist(".tmp") {
 		err := os.Mkdir(".tmp", 0755)
 		if err != nil {
 			return err
 		}
 	}
 
-	if filesystem.FileExists(".tmp/play.yml") {
+	if filesystem.FileExist(".tmp/play.yml") {
 		err := os.Remove(".tmp/play.yml")
 		if err != nil {
 			return err

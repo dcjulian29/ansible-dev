@@ -19,7 +19,7 @@ package ansible
 import (
 	"fmt"
 
-	"github.com/dcjulian29/go-toolbox/color"
+	"github.com/dcjulian29/go-toolbox/textformat"
 )
 
 // ApplyRoles iterates over the supplied role names, generates a temporary
@@ -35,7 +35,7 @@ func ApplyRoles(roles []string, tags []string, verbose bool) error {
 
 	if len(roles) > 0 {
 		for _, role := range roles {
-			fmt.Println(color.Info(fmt.Sprintf("\nApplying the '%s' role...", role)))
+			fmt.Println(textformat.Info(fmt.Sprintf("\nApplying the '%s' role...", role)))
 
 			err := GenerateRolePlay(role)
 			if err != nil {

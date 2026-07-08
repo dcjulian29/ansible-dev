@@ -26,8 +26,8 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -68,9 +68,9 @@ func NewCommand() *cobra.Command {
 		Aliases: []string{"init"},
 		Short:   "Initialize an Ansible development vagrant environment",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			fmt.Println(color.Yellow("Initializing development environment..."))
+			fmt.Println(textformat.Yellow("Initializing development environment..."))
 
-			if filesystem.FileExists("ansible.cfg") && !force {
+			if filesystem.FileExist("ansible.cfg") && !force {
 				return errors.New("ansible development environment already exist and force was not provided")
 			}
 
