@@ -4,15 +4,15 @@ ansible-dev
 
 dist/
 
-roles/
-playbooks/
-ansible.cfg
-.ansible-lint
-hosts.ini
-Vagrantfile
+/roles/
+/playbooks/
+/ansible.cfg
+/.ansible-lint
+/hosts.ini
+/Vagrantfile
 
-requirements.yml
-ansible.log
+/requirements.yml
+/ansible.log
 
 .vagrant/
 .tmp/
