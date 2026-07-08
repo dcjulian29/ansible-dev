@@ -62,7 +62,7 @@ import (
 	"github.com/dcjulian29/ansible-dev/cmd/tag"
 	"github.com/dcjulian29/ansible-dev/cmd/task"
 	"github.com/dcjulian29/ansible-dev/cmd/upgrade"
-	"github.com/dcjulian29/go-toolbox/color"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 	"go.szostok.io/version/extension"
 )
@@ -98,7 +98,7 @@ infrastructure environments.`,
 // [cobra.Command.Execute].
 //
 // If execution returns an error, the error message is printed to stderr
-// using [color.Fatal] formatting and the process exits with code 1.
+// using [textformat.Fatal] formatting and the process exits with code 1.
 func Execute() {
 	rootCmd.AddCommand(
 		extension.NewVersionCobraCmd(
@@ -107,7 +107,7 @@ func Execute() {
 	)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, "\n"+color.Fatal(err.Error()))
+		fmt.Fprintln(os.Stderr, "\n"+textformat.Fatal(err.Error()))
 		os.Exit(1)
 	}
 }

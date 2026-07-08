@@ -23,5 +23,5 @@ import (
 // RequirementsFileExist reports whether a requirements.yml file exists in
 // the current working directory.
 func RequirementsFileExist() bool {
-	return filesystem.FileExists("requirements.yml")
+	return filesystem.FileExist("requirements.yml")
 }

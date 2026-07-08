@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/textformat"
 )
 
 // RemoveRole deletes the directory tree for the named role. An error is
@@ -52,7 +52,7 @@ func RemoveRole(role string) error {
 		return err
 	}
 
-	fmt.Println(color.Info(fmt.Sprintf("role '%s' files were deleted.", role)))
+	fmt.Println(textformat.Info(fmt.Sprintf("role '%s' files were deleted.", role)))
 
 	return nil
 }

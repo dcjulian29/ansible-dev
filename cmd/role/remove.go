@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -87,7 +87,7 @@ func removeCmd() *cobra.Command {
 				}
 
 				msg := fmt.Sprintf("role '%s' removed from requirements.yml", role)
-				fmt.Println(color.Info(msg))
+				fmt.Println(textformat.Info(msg))
 			}
 
 			if r, _ := cmd.Flags().GetBool("purge"); r {

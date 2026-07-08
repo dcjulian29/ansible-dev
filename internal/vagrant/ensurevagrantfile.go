@@ -29,7 +29,7 @@ import (
 //
 // A non-nil error is returned if the file is missing.
 func EnsureVagrantfile() error {
-	if !filesystem.FileExists("Vagrantfile") {
+	if !filesystem.FileExist("Vagrantfile") {
 		return errors.New("can't find the Vagrantfile")
 	}
 

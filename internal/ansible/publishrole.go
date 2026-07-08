@@ -56,7 +56,7 @@ func PublishRole(workspaceDir, role, description string) error {
 
 	dest := filepath.Join(strings.ReplaceAll(roles, "\\", string(os.PathSeparator)), base)
 
-	if filesystem.DirectoryExists(dest) {
+	if filesystem.DirectoryExist(dest) {
 		return fmt.Errorf("published role already exists at '%s'", dest)
 	}
 

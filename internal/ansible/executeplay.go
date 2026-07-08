@@ -56,14 +56,14 @@ func ExecutePlay(play Play) error {
 
 	param = append(param, ".tmp/play.yml")
 
-	if filesystem.FileExists("ansible.log") {
+	if filesystem.FileExist("ansible.log") {
 		err := os.Remove("ansible.log")
 		if err != nil {
 			return fmt.Errorf("can't remove ansible.log: %v", err)
 		}
 	}
 
-	if filesystem.FileExists(".tmp/play.yml") {
+	if filesystem.FileExist(".tmp/play.yml") {
 		err := execute.ExternalProgram("ansible-playbook", param...)
 		if err != nil {
 			return fmt.Errorf("can't execute playbook: %v", err)

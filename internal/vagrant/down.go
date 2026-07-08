@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/execute"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"gopkg.in/ini.v1"
 )
 
@@ -51,7 +51,7 @@ func Down() error {
 	for _, vm := range section.KeyStrings() {
 		name := strings.Split(vm, " ")[0]
 
-		fmt.Printf(color.Yellow("\nStopping '%s'...\n\n"), name)
+		fmt.Printf(textformat.Yellow("\nStopping '%s'...\n\n"), name)
 
 		err := execute.ExternalProgram("vagrant", "halt", name)
 		if err != nil {

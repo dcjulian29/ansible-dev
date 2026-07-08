@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -62,7 +62,7 @@ func newCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Println(color.Info(fmt.Sprintf("runbook '%s' created at '%s'", name, dir)))
+			fmt.Println(textformat.Info(fmt.Sprintf("runbook '%s' created at '%s'", name, dir)))
 
 			publish, _ := cmd.Flags().GetBool("publish")
 			if !publish {
@@ -73,7 +73,7 @@ func newCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Println(color.Info(fmt.Sprintf("runbook '%s' published", name)))
+			fmt.Println(textformat.Info(fmt.Sprintf("runbook '%s' published", name)))
 
 			return nil
 		},

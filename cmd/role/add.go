@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -85,7 +85,7 @@ func addCmd() *cobra.Command {
 			}
 
 			msg := fmt.Sprintf("role '%s' added to requirements.yml but must be restored before use", name)
-			fmt.Println(color.Info(msg))
+			fmt.Println(textformat.Info(msg))
 
 			return nil
 		},

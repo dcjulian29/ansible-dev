@@ -20,12 +20,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
-	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/spf13/cobra"
 )
@@ -73,15 +70,10 @@ func compareCmd() *cobra.Command {
 			sep := string(os.PathSeparator)
 			pwd, _ := os.Getwd()
 
-			var userFolder string
-
-			if runtime.GOOS == "windows" {
-				userFolder = strings.ReplaceAll(os.Getenv("USERPROFILE"), "\\", sep)
-			} else {
-				userFolder = strings.ReplaceAll(os.Getenv("HOME"), "\\", sep)
-			}
-
 			repoFolder := strings.ReplaceAll(os.Getenv("ANSIBLE_ROLES"), "\\", sep)
+			if len(repoFolder) == 0 {
+				return errors.New("the Ansible roles directory is not defined in environment")
+			}
 
 			folder, err := ansible.RootRoleFolder()
 			if err != nil {
@@ -90,10 +82,6 @@ func compareCmd() *cobra.Command {
 
 			workingFolder := strings.ReplaceAll(pwd+sep+folder, "/./", sep)
 			workingFolder = strings.ReplaceAll(workingFolder, "\\./", sep)
-
-			if len(repoFolder) == 0 {
-				return errors.New("the Ansible roles directory is not defined in environment")
-			}
 
 			entries, err := os.ReadDir(workingFolder)
 			if err != nil {
@@ -104,92 +92,27 @@ func compareCmd() *cobra.Command {
 				return fmt.Errorf("no files found in '%s'", workingFolder)
 			}
 
+			home := ansible.HomeFolder()
+			ignored := []string{"\\.git", "\\.github", ".galaxy_install_info", ".ansible"}
+
 			for _, e := range entries {
 				workingEntry := workingFolder + sep + e.Name()
 				workingEntry = strings.ReplaceAll(workingEntry, "/./", sep)
 				workingEntry = strings.ReplaceAll(workingEntry, "\\./", sep)
-				repoEntry := strings.Replace(workingFolder, workingFolder, repoFolder+sep+e.Name(), 1)
+				repoEntry := repoFolder + sep + e.Name()
 
-				if !filesystem.DirectoryExists(repoEntry) {
+				if !filesystem.DirectoryExist(repoEntry) {
 					repoEntry = strings.Replace(repoEntry, "dcjulian29.", "", 1)
 
-					if !filesystem.DirectoryExists(repoEntry) {
-						repoEntry = ""
+					if !filesystem.DirectoryExist(repoEntry) {
+						continue
 					}
 				}
 
-				if len(repoEntry) > 0 {
-					source := strings.Replace(workingEntry, userFolder, "~", 1)
-					dest := strings.Replace(repoEntry, userFolder, "~", 1)
-					ignored := []string{"\\.git", "\\.github", ".galaxy_install_info", ".ansible"}
-
-					fmt.Println("'" + source + "' --> '" + dest + "'")
-
-					_, workingFile, err := filesystem.ScanDirectory(workingEntry, ignored)
-					if err != nil {
-						return err
-					}
-
-					_, repoFile, err := filesystem.ScanDirectory(repoEntry, ignored)
-					if err != nil {
-						return err
-					}
-
-					compare := false
-
-					if len(workingFile) != len(repoFile) {
-						compare = true
-					}
-
-					for _, f := range workingFile {
-						f2 := strings.Replace(f, workingEntry, repoEntry, 1)
-
-						var h1, h2 string
-
-						if filesystem.FileExists(f) {
-							h1, err = filesystem.FileHash(f)
-							if err != nil {
-								return err
-							}
-						}
-
-						if filesystem.FileExists(f2) {
-							h2, err = filesystem.FileHash(f2)
-							if err != nil {
-								return err
-							}
-						}
-
-						if h1 != h2 {
-							compare = true
-						}
-
-						if checksum {
-							file := strings.Replace(f, workingEntry+sep, "", 1)
-							if h1 == h2 {
-								fmt.Println(color.Green(fmt.Sprintf("%s: %s == %s", file, h1, h2)))
-							} else {
-								fmt.Println(color.Red(fmt.Sprintf("%s: %s != %s\n", file, h1, h2)))
-							}
-						}
-					}
-
-					if compare && !nodiff {
-						var program string
-						var params []string
-
-						if runtime.GOOS == "windows" {
-							program = "C:\\Program Files\\WinMerge\\winmergeu.exe"
-							params = []string{"/r", "/m", "Full", "/u", "/f", "AnsibleRoles", repoEntry, workingEntry}
-						} else {
-							program = "/usr/bin/meld"
-							params = []string{repoEntry, workingEntry}
-						}
-
-						if err := execute.ExternalProgram(program, params...); err != nil {
-							return err
-						}
-					}
+				if _, err := ansible.ComparePair(
+					workingEntry, repoEntry, ignored, checksum, nodiff, "AnsibleRoles", home,
+				); err != nil {
+					return err
 				}
 			}
 

@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/network"
+	"github.com/dcjulian29/go-toolbox/textformat"
 )
 
 // Up starts a named Vagrant VM, discovers its IP address via
@@ -43,7 +43,7 @@ import (
 // discovered via ssh-config, hosts.ini cannot be updated, or the VM
 // does not respond to pings within the retry limit.
 func Up(name string) error {
-	fmt.Printf(color.Yellow("\nBringing '%s' online...\n\n"), name)
+	fmt.Printf(textformat.Yellow("\nBringing '%s' online...\n\n"), name)
 
 	if err := execute.ExternalProgram("vagrant", "up", name); err != nil {
 		return err
@@ -58,7 +58,7 @@ func Up(name string) error {
 		return fmt.Errorf("failed to update hosts.ini for %s: %w", name, err)
 	}
 
-	fmt.Printf(color.Yellow("\nSearching for '%s' at %s..."), name, addr)
+	fmt.Printf(textformat.Yellow("\nSearching for '%s' at %s..."), name, addr)
 
 	found := false
 	count := 0
@@ -67,13 +67,13 @@ func Up(name string) error {
 		found = network.Ping(addr)
 
 		if found {
-			fmt.Println(color.Green(" [Found]"))
+			fmt.Println(textformat.Green(" [Found]"))
 		} else {
 			if count < 20 {
 				fmt.Print(".")
 				count++
 			} else {
-				fmt.Println(color.Red(" [NotFound]"))
+				fmt.Println(textformat.Red(" [NotFound]"))
 				return fmt.Errorf("can't find the '%s' VM at %s", name, addr)
 			}
 		}

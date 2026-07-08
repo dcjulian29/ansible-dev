@@ -29,7 +29,7 @@ import (
 // A non-nil error is returned only if the file is missing and cannot
 // be recreated.
 func EnsureHostsIni() error {
-	if filesystem.FileExists("hosts.ini") {
+	if filesystem.FileExist("hosts.ini") {
 		return nil
 	}
 

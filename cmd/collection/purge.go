@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 	"gopkg.in/ini.v1"
 )
@@ -71,7 +71,7 @@ func purgeCmd() *cobra.Command {
 
 			folder := filepath.Join(path.String(), "ansible_collections")
 
-			if !filesystem.DirectoryExists(folder) {
+			if !filesystem.DirectoryExist(folder) {
 				return errors.New("collections files do not exists")
 			}
 
@@ -79,7 +79,7 @@ func purgeCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Println(color.Info("collections files were purged"))
+			fmt.Println(textformat.Info("collections files were purged"))
 
 			return nil
 		},

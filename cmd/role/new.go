@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
-	"github.com/dcjulian29/go-toolbox/color"
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -95,7 +95,7 @@ func newCmd() *cobra.Command {
 			// ansible-galaxy init creates a "tests" folder that is not wanted
 			// in the published role, so remove it before overlaying templates.
 			tests := filepath.Join(folder, "tests")
-			if filesystem.DirectoryExists(tests) {
+			if filesystem.DirectoryExist(tests) {
 				if err := filesystem.RemoveDirectory(tests); err != nil {
 					return err
 				}
@@ -129,7 +129,7 @@ func newCmd() *cobra.Command {
 			}
 
 			msg := fmt.Sprintf("role '%s' published and added to requirements.yml", role)
-			fmt.Println(color.Info(msg))
+			fmt.Println(textformat.Info(msg))
 
 			return nil
 		},

@@ -63,7 +63,7 @@ func ExecuteRunbook(play Play) error {
 
 	param = append(param, "playbooks/runbook.yml")
 
-	if filesystem.FileExists("ansible.log") {
+	if filesystem.FileExist("ansible.log") {
 		if err := os.Remove("ansible.log"); err != nil {
 			return err
 		}
