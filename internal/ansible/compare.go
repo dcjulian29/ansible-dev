@@ -22,7 +22,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/dcjulian29/go-toolbox/textformat"
 )
@@ -48,8 +47,8 @@ func HomeFolder() string {
 // Any path containing one of the ignore substrings is skipped on both sides.
 // When checksum is true, a per-file hash line is printed — green when the two
 // copies match, red when they differ. When a difference is detected and noDiff
-// is false, a graphical diff tool is launched (WinMerge on Windows using the
-// diffFilter file filter, Meld elsewhere). When homeFolder is non-empty it is
+// is false, launch (when non-nil) is called with the canonical source and the
+// installed copy to open a graphical diff. When homeFolder is non-empty it is
 // abbreviated to "~" in the printed header.
 //
 // It returns true when any difference (file count or content) was found.
@@ -57,7 +56,8 @@ func ComparePair(
 	primaryDir, secondaryDir string,
 	ignore []string,
 	checksum, noDiff bool,
-	diffFilter, homeFolder string,
+	launch func(left, right string) error,
+	homeFolder string,
 ) (bool, error) {
 	sep := string(os.PathSeparator)
 
@@ -114,32 +114,11 @@ func ComparePair(
 		}
 	}
 
-	if differ && !noDiff {
-		if err := launchDiff(primaryDir, secondaryDir, diffFilter); err != nil {
+	if differ && !noDiff && launch != nil {
+		if err := launch(secondaryDir, primaryDir); err != nil {
 			return differ, err
 		}
 	}
 
 	return differ, nil
-}
-
-// launchDiff opens a graphical diff between the canonical source (secondaryDir,
-// shown on the left) and the installed copy (primaryDir, shown on the right).
-// On Windows it uses WinMerge with the named file filter; elsewhere it uses
-// Meld.
-func launchDiff(primaryDir, secondaryDir, filter string) error {
-	var (
-		program string
-		params  []string
-	)
-
-	if runtime.GOOS == "windows" {
-		program = "C:\\Program Files\\WinMerge\\winmergeu.exe"
-		params = []string{"/r", "/m", "Full", "/u", "/f", filter, secondaryDir, primaryDir}
-	} else {
-		program = "/usr/bin/meld"
-		params = []string{secondaryDir, primaryDir}
-	}
-
-	return execute.ExternalProgram(program, params...)
 }

@@ -17,12 +17,13 @@ limitations under the License.
 package role
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/settings"
+	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/spf13/cobra"
 )
@@ -35,20 +36,20 @@ import (
 //   - The local roles directory is resolved via [ansible.RootRoleFolder]
 //     (the "roles_path" setting in ansible.cfg) relative to the current
 //     working directory.
-//   - The upstream repository directory is read from the ANSIBLE_ROLES
-//     environment variable. An error is returned if this variable is not
-//     set.
+//   - The upstream repository directory is the configured roles_path
+//     (see "ansible-dev config roles-path"). An error is returned if it is
+//     not set.
 //
 // For each subdirectory in the local roles path, the command looks for a
-// matching directory in ANSIBLE_ROLES (falling back to a name with the
-// "dcjulian29." prefix stripped). If a match is found, it performs a
-// file-by-file hash comparison, excluding .git, .github,
-// .galaxy_install_info, and .ansible paths.
+// matching directory under the configured roles path (falling back to a name
+// with the "dcjulian29." prefix stripped). If a match is found, it performs a
+// file-by-file hash comparison, excluding the configured role_ignore
+// substrings (nothing is excluded when that list is empty).
 //
-// When differences are detected the command opens a graphical diff tool:
-//   - Windows: WinMerge (C:\Program Files\WinMerge\winmergeu.exe) with
-//     recursive comparison and the "AnsibleRoles" file filter.
-//   - Linux/macOS: Meld (/usr/bin/meld).
+// When differences are detected the command opens the diff tool configured for
+// the current operating system (see "ansible-dev config diff-program"),
+// substituting the role_filter into its argument template. Unless --no-diff is
+// given, it is an error when no diff program is configured for this OS.
 //
 // Flags:
 //   - --checksum:  print per-file hash comparisons to stdout. Matching
@@ -70,9 +71,31 @@ func compareCmd() *cobra.Command {
 			sep := string(os.PathSeparator)
 			pwd, _ := os.Getwd()
 
-			repoFolder := strings.ReplaceAll(os.Getenv("ANSIBLE_ROLES"), "\\", sep)
-			if len(repoFolder) == 0 {
-				return errors.New("the Ansible roles directory is not defined in environment")
+			repoPath, err := settings.RolesPath()
+			if err != nil {
+				return err
+			}
+
+			repoFolder := strings.ReplaceAll(repoPath, "\\", sep)
+
+			ignored, err := settings.RoleIgnore()
+			if err != nil {
+				return err
+			}
+
+			var launch func(left, right string) error
+
+			if !nodiff {
+				diff, err := settings.Diff()
+				if err != nil {
+					return err
+				}
+
+				launch = func(left, right string) error {
+					program, args := diff.Command(diff.RoleFilter, left, right)
+
+					return execute.ExternalProgram(program, args...)
+				}
 			}
 
 			folder, err := ansible.RootRoleFolder()
@@ -93,7 +116,6 @@ func compareCmd() *cobra.Command {
 			}
 
 			home := ansible.HomeFolder()
-			ignored := []string{"\\.git", "\\.github", ".galaxy_install_info", ".ansible"}
 
 			for _, e := range entries {
 				workingEntry := workingFolder + sep + e.Name()
@@ -110,7 +132,7 @@ func compareCmd() *cobra.Command {
 				}
 
 				if _, err := ansible.ComparePair(
-					workingEntry, repoEntry, ignored, checksum, nodiff, "AnsibleRoles", home,
+					workingEntry, repoEntry, ignored, checksum, nodiff, launch, home,
 				); err != nil {
 					return err
 				}

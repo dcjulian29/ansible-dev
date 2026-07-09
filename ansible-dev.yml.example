@@ -1,0 +1,65 @@
+# Example ansible-dev configuration.
+#
+# Copy to ~/.config/ansible-dev.yml and adjust for your environment. The
+# configuration always lives in ~/.config; the directory paths below can point
+# anywhere. Values can also be set with the "ansible-dev config" subcommands.
+
+# Directory holding your published role repositories (bare names). Any absolute
+# directory path is fine. Required by "role compare" and "role new --publish".
+roles_path: /path/to/ansible/roles
+
+# Directory holding your published runbook repositories (bare names). Any
+# absolute directory path is fine. Required by "runbook compare" and
+# "runbook new".
+runbooks_path: /path/to/ansible/runbooks
+
+# Path substrings excluded by "role compare". Empty means compare everything.
+role_ignore:
+  - \.git
+  - \.github
+  - .galaxy_install_info
+  - .ansible
+
+# Path substrings excluded by "runbook compare". Empty means compare everything.
+# Keep this aligned with your diff tool's filter so the checksum pass and the
+# visual diff agree. The list below excludes the source repo's SCM/per-repo
+# files (which galaxy strips on build) and the installed collection's runtime
+# artifacts (MANIFEST.json / FILES.json).
+runbook_ignore:
+  - .ansible-lint
+  - .editorconfig
+  - .gitattributes
+  - .gitignore
+  - .yamllint
+  - build.cmd
+  - FILES.json
+  - galaxy.yml
+  - MANIFEST.json
+  - README.md
+  - .tar.gz
+  - .devcontainer
+  - .git
+  - .github
+  - .vscode
+
+# Diff-tool settings keyed by operating system (runtime.GOOS). Only the entry
+# for the OS you run on is used; supporting a new platform is just a new key.
+# The compare commands error if the current OS has no diff program configured
+# (unless run with --no-diff).
+#
+# additional_args is a template: {left} and {right} are replaced with the two
+# directories, and {filter} is replaced with role_filter or runbook_filter for
+# the comparison being run (a standalone {filter} and its preceding flag are
+# dropped when that filter is empty).
+diff:
+  linux:
+    program: /usr/bin/meld
+    additional_args: ["{left}", "{right}"]
+  darwin:
+    program: /usr/bin/opendiff
+    additional_args: ["{left}", "{right}"]
+  windows:
+    program: C:\Program Files\WinMerge\winmergeu.exe
+    role_filter: AnsibleRoles
+    runbook_filter: AnsibleRunbooks
+    additional_args: [/r, /m, Full, /u, /f, "{filter}", "{left}", "{right}"]
