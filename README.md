@@ -11,3 +11,55 @@ playbooks, roles, and runbooks.
 By utilizing Ansible, developers/operators can automate the deployment of software applications
 across multiple hosting providers, reducing the time and effort required to manage complex
 infrastructure environments.
+
+## Configuration
+
+ansible-dev reads its settings from `~/.config/ansible-dev.yml`. Run `ansible-dev config path` to
+print the exact location or `ansible-dev config show` to dump the current values. A fully
+commented file you can copy is included as
+[ansible-dev.yml.example](ansible-dev.yml.example).
+
+Two settings are required before the role and runbook commands will work:
+
+| Setting | Purpose |
+| --- | --- |
+| `roles_path` | Directory holding your published role repositories. Required by `role compare` and `role new --publish`. |
+| `runbooks_path` | Directory holding your published runbook repositories. Required by `runbook compare` and `runbook new`. |
+
+```shell
+ansible-dev config roles-path /path/to/ansible/roles
+ansible-dev config runbooks-path /path/to/ansible/runbooks
+```
+
+### Compare ignore lists
+
+`role compare` and `runbook compare` skip any path containing one of the configured substrings.
+An empty list compares everything.
+
+```shell
+ansible-dev config role-ignore list
+ansible-dev config role-ignore add .github
+ansible-dev config role-ignore remove .github
+ansible-dev config role-ignore clear
+```
+
+`runbook-ignore` accepts the same subcommands for the runbook list.
+
+### Diff tool
+
+The external diff tool is configured per operating system, so one file can serve several machines
+and supporting a new platform is just a new entry. Only the entry for the host you are running on
+is consulted, and the compare commands report an error when it has no program set — unless they
+are run with `--no-diff`.
+
+```shell
+ansible-dev config diff-program "C:\Program Files\WinMerge\winmergeu.exe"
+ansible-dev config diff-role-filter AnsibleRoles
+ansible-dev config diff-runbook-filter AnsibleRunbooks
+ansible-dev config diff-args /r /m Full /u /f "{filter}" "{left}" "{right}"
+```
+
+The arguments are a template: `{left}` and `{right}` are replaced with the two directories being
+compared, and `{filter}` with the role or runbook filter for the comparison being run. When that
+filter is empty, a standalone `{filter}` argument is dropped along with the flag immediately
+before it, so no dangling flag is passed to the diff tool.
