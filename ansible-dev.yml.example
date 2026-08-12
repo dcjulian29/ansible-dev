@@ -14,9 +14,12 @@ roles_path: /path/to/ansible/roles
 runbooks_path: /path/to/ansible/runbooks
 
 # Path substrings excluded by "role compare". Empty means compare everything.
+# Each entry is a plain substring test against the full path — not a regular
+# expression and not a glob — so entries should not contain escapes. "\.git"
+# matches only on Windows, where the backslash is the path separator.
 role_ignore:
-  - \.git
-  - \.github
+  - .git
+  - .github
   - .galaxy_install_info
   - .ansible
 
