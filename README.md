@@ -31,6 +31,19 @@ ansible-dev config roles-path /path/to/ansible/roles
 ansible-dev config runbooks-path /path/to/ansible/runbooks
 ```
 
+### Upgrading from the environment variables
+
+Earlier versions read the paths from `ANSIBLE_ROLES` and `ANSIBLE_RUNBOOKS`. Those variables are
+no longer consulted. To carry existing values into the configuration file:
+
+```shell
+ansible-dev config import-env
+```
+
+Settings that already have a value are left unchanged; pass `--force` to overwrite them. Any
+command that needs an unset path will point you at `config import-env` when the matching variable
+is still present in your environment.
+
 ### Compare ignore lists
 
 `role compare` and `runbook compare` skip any path containing one of the configured substrings.
