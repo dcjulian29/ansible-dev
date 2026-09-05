@@ -1,6 +1,6 @@
 module github.com/dcjulian29/ansible-dev
 
-go 1.26.5
+go 1.27.0
 
 require (
 	github.com/dcjulian29/go-toolbox v0.33.0
