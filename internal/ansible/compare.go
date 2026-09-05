@@ -46,16 +46,17 @@ func HomeFolder() string {
 //
 // Any path containing one of the ignore substrings is skipped on both sides.
 // When checksum is true, a per-file hash line is printed — green when the two
-// copies match, red when they differ. When a difference is detected and noDiff
-// is false, launch (when non-nil) is called with the canonical source and the
-// installed copy to open a graphical diff. When homeFolder is non-empty it is
-// abbreviated to "~" in the printed header.
+// copies match, red when they differ. When a difference is detected and launch
+// is non-nil, it is called with the canonical source and the installed copy to
+// open a graphical diff; a caller that wants no diff at all (--no-diff) passes
+// nil. When homeFolder is non-empty it is abbreviated to "~" in the printed
+// header.
 //
 // It returns true when any difference (file count or content) was found.
 func ComparePair(
 	primaryDir, secondaryDir string,
 	ignore []string,
-	checksum, noDiff bool,
+	checksum bool,
 	launch func(left, right string) error,
 	homeFolder string,
 ) (bool, error) {
@@ -114,7 +115,7 @@ func ComparePair(
 		}
 	}
 
-	if differ && !noDiff && launch != nil {
+	if differ && launch != nil {
 		if err := launch(secondaryDir, primaryDir); err != nil {
 			return differ, err
 		}

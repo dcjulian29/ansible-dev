@@ -134,7 +134,7 @@ func compareCmd() *cobra.Command {
 				}
 
 				if _, err := ansible.ComparePair(
-					workingEntry, repoEntry, ignored, checksum, nodiff, launch, home,
+					workingEntry, repoEntry, ignored, checksum, launch, home,
 				); err != nil {
 					return err
 				}
