@@ -53,10 +53,16 @@ is still present in your environment.
 `role compare` and `runbook compare` skip any path containing one of the configured substrings.
 An empty list compares everything.
 
+Each entry is a plain substring test against the whole path — not a regular expression and not a
+glob — so a short entry excludes more than it might appear to. `.git` also excludes `.github`,
+`.gitignore` and `.gitattributes`; `.ansible` also excludes `.ansible-lint`. For the same reason
+entries should not contain escapes or path separators: `\.git` matches only on Windows, where the
+backslash happens to be the separator, and silently matches nothing on Linux or macOS.
+
 ```shell
 ansible-dev config role-ignore list
-ansible-dev config role-ignore add .github
-ansible-dev config role-ignore remove .github
+ansible-dev config role-ignore add .vscode
+ansible-dev config role-ignore remove .vscode
 ansible-dev config role-ignore clear
 ```
 
