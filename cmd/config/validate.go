@@ -33,14 +33,20 @@ import (
 // Without this the mistake is silent — a typo or a relative path persists
 // happily and only surfaces much later as a confusing failure from
 // "role compare" or "runbook compare".
+//
+// A "~"-rooted path is checked in its expanded form and counts as absolute: it
+// is the portable way to write a home-relative directory in a dotfile shared
+// between machines, so it must not be reported as a relative-path mistake.
 func warnAboutDirectory(key, path string) {
-	if !filepath.IsAbs(path) {
+	expanded := filesystem.ExpandHome(path)
+
+	if !filepath.IsAbs(expanded) {
 		fmt.Println(textformat.Warn(fmt.Sprintf(
 			"%s '%s' is not an absolute path; it will be resolved against the "+
 				"working directory of whichever command reads it", key, path)))
 	}
 
-	if !filesystem.DirectoryExist(path) {
+	if !filesystem.DirectoryExist(expanded) {
 		fmt.Println(textformat.Warn(fmt.Sprintf(
 			"%s '%s' does not exist or is not a directory", key, path)))
 	}

@@ -19,6 +19,8 @@ package settings
 import (
 	"fmt"
 	"os"
+
+	"github.com/dcjulian29/go-toolbox/filesystem"
 )
 
 // The environment variables read by versions of ansible-dev before the
@@ -45,34 +47,63 @@ func unsetError(key, command, env string) error {
 	return fmt.Errorf("%s is not configured (run 'ansible-dev config %s <dir>')", key, command)
 }
 
-// RolesPath returns the configured roles repository directory. It is an error
-// when roles_path is not set.
+// resolvePath returns the usable value of a required directory setting: a
+// leading "~" expanded to the current user's home directory, and the result
+// confirmed to be a directory that exists.
+//
+// Expanding here rather than when the value is stored is what keeps one dotfile
+// portable: "~/code/ansible/roles" resolves to the right place on each machine,
+// including across operating systems, where an absolute path could not.
+//
+// The existence check is deliberately an error, unlike the warning the config
+// setters emit. A setter may reasonably be pointed at a directory that does not
+// exist yet, but by the time a command needs the path it has to be real —
+// without this, an unexpanded or mistyped path yields no matches and the
+// command finishes silently, which reads as "nothing to do" rather than
+// "misconfigured".
+func resolvePath(value, key, command, env string) (string, error) {
+	if value == "" {
+		return "", unsetError(key, command, env)
+	}
+
+	expanded := filesystem.ExpandHome(value)
+
+	if !filesystem.DirectoryExist(expanded) {
+		where := fmt.Sprintf("'%s'", value)
+		if expanded != value {
+			where = fmt.Sprintf("'%s' (expanded to '%s')", value, expanded)
+		}
+
+		return "", fmt.Errorf(
+			"%s is set to %s, which is not an existing directory "+
+				"(run 'ansible-dev config %s <dir>' to correct it)", key, where, command)
+	}
+
+	return expanded, nil
+}
+
+// RolesPath returns the configured roles repository directory, with "~"
+// expanded. It is an error when roles_path is unset or does not name an
+// existing directory.
 func RolesPath() (string, error) {
 	cfg, err := Load()
 	if err != nil {
 		return "", err
 	}
 
-	if cfg.RolesPath == "" {
-		return "", unsetError("roles_path", "roles-path", LegacyRolesEnv)
-	}
-
-	return cfg.RolesPath, nil
+	return resolvePath(cfg.RolesPath, "roles_path", "roles-path", LegacyRolesEnv)
 }
 
-// RunbooksPath returns the configured runbooks repository directory. It is an
-// error when runbooks_path is not set.
+// RunbooksPath returns the configured runbooks repository directory, with "~"
+// expanded. It is an error when runbooks_path is unset or does not name an
+// existing directory.
 func RunbooksPath() (string, error) {
 	cfg, err := Load()
 	if err != nil {
 		return "", err
 	}
 
-	if cfg.RunbooksPath == "" {
-		return "", unsetError("runbooks_path", "runbooks-path", LegacyRunbooksEnv)
-	}
-
-	return cfg.RunbooksPath, nil
+	return resolvePath(cfg.RunbooksPath, "runbooks_path", "runbooks-path", LegacyRunbooksEnv)
 }
 
 // RoleIgnore returns the path substrings excluded by "role compare". An empty

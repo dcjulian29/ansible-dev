@@ -4,14 +4,20 @@
 # configuration always lives in ~/.config; the directory paths below can point
 # anywhere. Values can also be set with the "ansible-dev config" subcommands.
 
-# Directory holding your published role repositories (bare names). Any absolute
-# directory path is fine. Required by "role compare" and "role new --publish".
-roles_path: /path/to/ansible/roles
+# Directory holding your published role repositories (bare names). Required by
+# "role compare" and "role new --publish".
+#
+# Use an absolute path, or start with "~/" to write it relative to your home
+# directory. "~/" is expanded when the value is read, so the same dotfile works
+# on machines whose home directories differ -- including across operating
+# systems. The directory must exist when a command needs it, otherwise that
+# command reports the unusable path and stops.
+roles_path: ~/code/ansible/roles
 
-# Directory holding your published runbook repositories (bare names). Any
-# absolute directory path is fine. Required by "runbook compare" and
-# "runbook new".
-runbooks_path: /path/to/ansible/runbooks
+# Directory holding your published runbook repositories (bare names). Required
+# by "runbook compare" and "runbook new". Accepts "~/" the same way as
+# roles_path above.
+runbooks_path: ~/code/ansible/runbooks
 
 # Path substrings excluded by "role compare". Empty means compare everything.
 # Each entry is a plain substring test against the full path — not a regular

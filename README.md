@@ -27,13 +27,19 @@ Two settings are required before the role and runbook commands will work:
 | `runbooks_path` | Directory holding your published runbook repositories. Required by `runbook compare` and `runbook new`. |
 
 ```shell
-ansible-dev config roles-path /path/to/ansible/roles
-ansible-dev config runbooks-path /path/to/ansible/runbooks
+ansible-dev config roles-path ~/code/ansible/roles
+ansible-dev config runbooks-path ~/code/ansible/runbooks
 ```
 
-Both expect an absolute directory. A relative path, or one that does not exist, is still saved but
-reported as a warning — so a configuration file can be prepared on a machine where the directory
-has yet to be created, without a typo passing unnoticed.
+Both accept an absolute directory or a `~/`-rooted one. `~/` is expanded when the value is read
+rather than when it is stored, so the same configuration file works on machines whose home
+directories differ — including across operating systems, where no single absolute path would.
+
+A relative path, or one that does not exist yet, is still saved and only reported as a warning: a
+configuration file can be prepared on a machine where the directory has yet to be created, without
+a typo passing unnoticed. When a command actually needs the path, though, the directory has to
+exist — otherwise that command reports the unusable value and stops rather than comparing nothing
+and exiting quietly.
 
 ### Upgrading from the environment variables
 
