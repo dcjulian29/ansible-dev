@@ -18,6 +18,7 @@ package config
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/dcjulian29/ansible-dev/internal/settings"
 	"github.com/dcjulian29/go-toolbox/textformat"
@@ -80,13 +81,16 @@ func ignoreAddCmd(
 			}
 
 			list := get(&cfg)
-			for _, v := range list {
-				if v == args[0] {
-					return nil // already present; nothing to do
-				}
+			if slices.Contains(list, args[0]) {
+				fmt.Println(textformat.Warn(
+					fmt.Sprintf("'%s' is already in the ignore list", args[0])))
+
+				return nil
 			}
 
-			set(&cfg, append(list, args[0]))
+			// Cloned rather than appended to in place: the slice shares its
+			// backing array with the cached configuration (see settings.Load).
+			set(&cfg, append(slices.Clone(list), args[0]))
 
 			if err := settings.Save(&cfg); err != nil {
 				return err
@@ -113,11 +117,20 @@ func ignoreRemoveCmd(
 				return err
 			}
 
-			kept := make([]string, 0, len(get(&cfg)))
-			for _, v := range get(&cfg) {
+			list := get(&cfg)
+
+			kept := make([]string, 0, len(list))
+			for _, v := range list {
 				if v != args[0] {
 					kept = append(kept, v)
 				}
+			}
+
+			if len(kept) == len(list) {
+				fmt.Println(textformat.Warn(
+					fmt.Sprintf("'%s' is not in the ignore list", args[0])))
+
+				return nil
 			}
 
 			set(&cfg, kept)
