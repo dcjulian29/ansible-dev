@@ -71,7 +71,9 @@ func importEnvCmd() *cobra.Command {
 				return err
 			}
 
-			imported := 0
+			// Tracked so the directory warnings below cover only what this run
+			// actually imported, not unrelated settings already in the file.
+			var imported []legacyImport
 
 			for _, l := range legacyImports {
 				value := os.Getenv(l.env)
@@ -87,14 +89,14 @@ func importEnvCmd() *cobra.Command {
 				default:
 					l.set(&cfg, value)
 
-					imported++
+					imported = append(imported, l)
 
 					fmt.Println(textformat.Info(
 						fmt.Sprintf("%s set to '%s' from %s", l.key, value, l.env)))
 				}
 			}
 
-			if imported == 0 {
+			if len(imported) == 0 {
 				fmt.Println(textformat.Warn("nothing was imported; the configuration is unchanged"))
 
 				return nil
@@ -106,7 +108,14 @@ func importEnvCmd() *cobra.Command {
 
 			fmt.Println(textformat.Info(fmt.Sprintf(
 				"imported %d setting(s); %s and %s are no longer read and can be unset",
-				imported, settings.LegacyRolesEnv, settings.LegacyRunbooksEnv)))
+				len(imported), settings.LegacyRolesEnv, settings.LegacyRunbooksEnv)))
+
+			// An environment variable left over from an older machine can
+			// easily name a directory that is gone, so check what was imported
+			// rather than trusting it.
+			for _, l := range imported {
+				warnAboutDirectory(l.key, l.current(&cfg))
+			}
 
 			return nil
 		},

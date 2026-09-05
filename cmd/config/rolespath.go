@@ -26,7 +26,8 @@ import (
 
 // rolesPathCmd creates "ansible-dev config roles-path [directory]". With no
 // argument it prints the configured roles path; with a directory it sets and
-// saves it.
+// saves it, warning (but not failing) when the directory is relative or does
+// not exist.
 func rolesPathCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "roles-path [directory]",
@@ -51,6 +52,8 @@ func rolesPathCmd() *cobra.Command {
 			}
 
 			fmt.Println(textformat.Info(fmt.Sprintf("roles_path set to '%s'", cfg.RolesPath)))
+
+			warnAboutDirectory("roles_path", cfg.RolesPath)
 
 			return nil
 		},

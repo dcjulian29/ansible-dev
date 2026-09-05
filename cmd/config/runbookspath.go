@@ -26,7 +26,8 @@ import (
 
 // runbooksPathCmd creates "ansible-dev config runbooks-path [directory]". With
 // no argument it prints the configured runbooks path; with a directory it sets
-// and saves it.
+// and saves it, warning (but not failing) when the directory is relative or
+// does not exist.
 func runbooksPathCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "runbooks-path [directory]",
@@ -51,6 +52,8 @@ func runbooksPathCmd() *cobra.Command {
 			}
 
 			fmt.Println(textformat.Info(fmt.Sprintf("runbooks_path set to '%s'", cfg.RunbooksPath)))
+
+			warnAboutDirectory("runbooks_path", cfg.RunbooksPath)
 
 			return nil
 		},

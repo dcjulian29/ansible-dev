@@ -31,6 +31,10 @@ ansible-dev config roles-path /path/to/ansible/roles
 ansible-dev config runbooks-path /path/to/ansible/runbooks
 ```
 
+Both expect an absolute directory. A relative path, or one that does not exist, is still saved but
+reported as a warning — so a configuration file can be prepared on a machine where the directory
+has yet to be created, without a typo passing unnoticed.
+
 ### Upgrading from the environment variables
 
 Earlier versions read the paths from `ANSIBLE_ROLES` and `ANSIBLE_RUNBOOKS`. Those variables are
