@@ -59,6 +59,13 @@ type Config struct {
 var file = configuration.New[Config]("ansible-dev.yml")
 
 // Load returns the persisted configuration (singleton-cached on first read).
+//
+// The result is a shallow copy: the Diff map and the two ignore slices are
+// shared with the cache and with every other Config that Load has returned.
+// Assigning a field is therefore safe, but callers must not mutate those
+// structures in place — build a replacement and assign it, as the ignore
+// subcommands and [Config.setDiff] do. Otherwise an edit becomes visible to
+// readers before, or even without, a successful [Save].
 func Load() (Config, error) {
 	return file.Load()
 }

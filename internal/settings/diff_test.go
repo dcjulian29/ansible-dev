@@ -82,6 +82,30 @@ func TestCommand_NoPlaceholdersPassThrough(t *testing.T) {
 	}
 }
 
+// TestSetters_DoNotMutateSharedMap pins the aliasing contract documented on
+// [Load]: every Config it returns shares one Diff map, so a setter must write
+// into a replacement rather than in place. Two Configs built from one map stand
+// in for two Load results.
+func TestSetters_DoNotMutateSharedMap(t *testing.T) {
+	shared := map[string]DiffTool{}
+	owner := Config{Diff: shared}
+	sibling := Config{Diff: shared}
+
+	owner.SetDiffProgram("prog")
+
+	if len(shared) != 0 {
+		t.Errorf("shared map was mutated in place: %v", shared)
+	}
+
+	if got := sibling.CurrentDiff().Program; got != "" {
+		t.Errorf("sibling Config saw the unsaved change: program = %q, want empty", got)
+	}
+
+	if got := owner.CurrentDiff().Program; got != "prog" {
+		t.Errorf("owner Config = %q, want %q", got, "prog")
+	}
+}
+
 func TestSetters_PopulateCurrentOSEntry(t *testing.T) {
 	var cfg Config
 

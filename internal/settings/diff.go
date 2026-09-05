@@ -18,6 +18,7 @@ package settings
 
 import (
 	"fmt"
+	"maps"
 	"runtime"
 	"strings"
 )
@@ -63,17 +64,26 @@ func (c Config) CurrentDiff() DiffTool {
 	return c.Diff[runtime.GOOS]
 }
 
-// setDiff mutates (creating if needed) the diff entry for the current operating
-// system. Because a new OS is just a new map key, no source change is required
-// to configure a platform the tool has not seen before.
+// setDiff replaces (creating if needed) the diff entry for the current
+// operating system. Because a new OS is just a new map key, no source change is
+// required to configure a platform the tool has not seen before.
+//
+// The entry is written into a copy of the map rather than in place. [Load]
+// returns a shallow copy of the cached configuration, so every Config it hands
+// out shares one Diff map; mutating that map directly would publish an unsaved
+// edit to any other holder — including the cache consulted after a failed
+// [Save].
 func (c *Config) setDiff(mutate func(*DiffTool)) {
-	if c.Diff == nil {
-		c.Diff = map[string]DiffTool{}
+	replacement := maps.Clone(c.Diff)
+	if replacement == nil {
+		replacement = map[string]DiffTool{}
 	}
 
-	diff := c.Diff[runtime.GOOS]
+	diff := replacement[runtime.GOOS]
 	mutate(&diff)
-	c.Diff[runtime.GOOS] = diff
+	replacement[runtime.GOOS] = diff
+
+	c.Diff = replacement
 }
 
 // SetDiffProgram sets the diff program for the current operating system.
