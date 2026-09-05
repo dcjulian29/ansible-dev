@@ -25,6 +25,7 @@ import (
 	"github.com/dcjulian29/ansible-dev/internal/settings"
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -118,6 +119,7 @@ func compareCmd() *cobra.Command {
 			}
 
 			home := ansible.HomeFolder()
+			compared := 0
 
 			for _, e := range entries {
 				workingEntry := workingFolder + sep + e.Name()
@@ -133,11 +135,23 @@ func compareCmd() *cobra.Command {
 					}
 				}
 
+				compared++
+
 				if _, err := ansible.ComparePair(
 					workingEntry, repoEntry, ignored, checksum, launch, home,
 				); err != nil {
 					return err
 				}
+			}
+
+			// Skipping an unpublished role is normal and too common to report
+			// individually, but skipping every one of them is not: without this
+			// the command would print nothing and exit 0, which reads as "no
+			// differences" rather than "nothing was compared".
+			if compared == 0 {
+				fmt.Println(textformat.Warn(fmt.Sprintf(
+					"none of the %d role(s) in '%s' have a matching directory under '%s'",
+					len(entries), workingFolder, repoFolder)))
 			}
 
 			return nil
