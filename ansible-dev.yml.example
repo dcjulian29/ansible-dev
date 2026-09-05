@@ -4,6 +4,15 @@
 # configuration always lives in ~/.config; the directory paths below can point
 # anywhere. Values can also be set with the "ansible-dev config" subcommands.
 
+# Galaxy/GitHub namespace new roles belong to. With "dcjulian29", "role new
+# nginx" produces the role "dcjulian29.nginx" in the repository
+# "dcjulian29/ansible-role-nginx".
+#
+# Required by "role new", which fails rather than guessing when it is unset.
+# Override it per role with "--namespace", or by naming it in the role itself
+# ("role new acme.nginx"), when building a role for someone else.
+namespace: dcjulian29
+
 # Directory holding your published role repositories (bare names). Required by
 # "role compare" and "role new --publish".
 #

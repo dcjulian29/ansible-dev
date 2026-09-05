@@ -42,7 +42,7 @@ func BaseRoleName(role string) string {
 // PublishRole copies a freshly-scaffolded role from its workspace location
 // into the configured roles_path directory (using the role's bare name),
 // initializes a git repository there, and then creates and pushes a public
-// GitHub repository named "ansible-role-<name>".
+// GitHub repository named "<namespace>/ansible-role-<name>".
 //
 // The description is used for the GitHub repository exactly as passed; compose
 // it with [RoleDescription] so the published repository, meta/main.yml, and the
@@ -51,7 +51,7 @@ func BaseRoleName(role string) string {
 // It relies on the "git" and "gh" executables being installed and, in the case
 // of gh, already authenticated. An error is returned if roles_path is unset,
 // the destination already exists, or any external command fails.
-func PublishRole(workspaceDir, role, description string) error {
+func PublishRole(workspaceDir, namespace, role, description string) error {
 	base := BaseRoleName(role)
 
 	roles, err := settings.RolesPath()
@@ -87,7 +87,7 @@ func PublishRole(workspaceDir, role, description string) error {
 	}
 
 	return execute.ExternalProgram("gh", "repo", "create",
-		"dcjulian29/ansible-role-"+base,
+		namespace+"/ansible-role-"+base,
 		"--source", dest,
 		"--remote", "origin",
 		"--push",

@@ -34,6 +34,12 @@ import (
 // consulted; the compare commands error when the current OS has no diff program
 // configured (unless run with --no-diff).
 type Config struct {
+	// Namespace is the Galaxy/GitHub namespace new roles belong to, for
+	// example "dcjulian29", giving the role "dcjulian29.nginx" in the
+	// repository "dcjulian29/ansible-role-nginx". Required by "role new"
+	// unless the role argument names one or --namespace is passed.
+	Namespace string `yaml:"namespace"`
+
 	// RolesPath is the directory holding the published role repositories
 	// (bare names). Required; role commands error when it is unset.
 	RolesPath string `yaml:"roles_path"`

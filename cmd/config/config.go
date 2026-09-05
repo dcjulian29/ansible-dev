@@ -26,9 +26,10 @@ import (
 // NewCommand returns the Cobra command for the "config" group. Its subcommands
 // display the configuration (show) and its location (path), import the legacy
 // environment variables (import-env), set the required repository paths
-// (roles-path, runbooks-path), manage the compare ignore lists (role-ignore,
-// runbook-ignore), and configure the diff tool for the current operating system
-// (diff-program, diff-role-filter, diff-runbook-filter, diff-args).
+// (roles-path, runbooks-path), set the namespace new roles are published under
+// (namespace), manage the compare ignore lists (role-ignore, runbook-ignore),
+// and configure the diff tool for the current operating system (diff-program,
+// diff-role-filter, diff-runbook-filter, diff-args).
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
@@ -38,6 +39,7 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(showCmd())
 	cmd.AddCommand(pathCmd())
 	cmd.AddCommand(importEnvCmd())
+	cmd.AddCommand(namespaceCmd())
 	cmd.AddCommand(rolesPathCmd())
 	cmd.AddCommand(runbooksPathCmd())
 

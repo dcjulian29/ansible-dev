@@ -42,8 +42,8 @@ import (
 //     not set.
 //
 // For each subdirectory in the local roles path, the command looks for a
-// matching directory under the configured roles path (falling back to a name
-// with the "dcjulian29." prefix stripped). If a match is found, it performs a
+// matching directory under the configured roles path (falling back to the bare
+// role name, with any namespace stripped). If a match is found, it performs a
 // file-by-file hash comparison, excluding the configured role_ignore
 // substrings (nothing is excluded when that list is empty).
 //
@@ -128,7 +128,12 @@ func compareCmd() *cobra.Command {
 				repoEntry := repoFolder + sep + e.Name()
 
 				if !filesystem.DirectoryExist(repoEntry) {
-					repoEntry = strings.Replace(repoEntry, "dcjulian29.", "", 1)
+					// Published repositories use the bare role name, so retry
+					// with whatever namespace the installed directory carries
+					// stripped off. Deriving it from the name matches any
+					// namespace rather than only the one this tool used to
+					// hard-code.
+					repoEntry = repoFolder + sep + ansible.BaseRoleName(e.Name())
 
 					if !filesystem.DirectoryExist(repoEntry) {
 						continue

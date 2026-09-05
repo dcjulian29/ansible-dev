@@ -68,16 +68,22 @@ func ApplyTemplate(src fs.FS, dest string, replacements map[string]string) error
 
 // ApplyRoleTemplate overlays the embedded role scaffolding (LICENSE, README,
 // lint configuration, GitHub workflows, meta/main.yml, ...) onto an existing
-// role directory, substituting the role's bare name for !!ROLE_NAME!! and the
-// supplied description for !!ROLE_DESC!!.
-func ApplyRoleTemplate(dir, role, description string) error {
+// role directory, substituting the role's bare name for !!ROLE_NAME!!, the
+// namespace for !!ROLE_NAMESPACE!!, and the supplied description for
+// !!ROLE_DESC!!.
+//
+// The namespace fills the galaxy_info namespace and tag in meta/main.yml and
+// the repository owner in the generated README's badges and requirements
+// snippet, all of which were previously fixed to one account.
+func ApplyRoleTemplate(dir, namespace, role, description string) error {
 	src, err := templates.Role()
 	if err != nil {
 		return err
 	}
 
 	return ApplyTemplate(src, dir, map[string]string{
-		"!!ROLE_NAME!!": BaseRoleName(role),
-		"!!ROLE_DESC!!": description,
+		"!!ROLE_NAMESPACE!!": namespace,
+		"!!ROLE_NAME!!":      BaseRoleName(role),
+		"!!ROLE_DESC!!":      description,
 	})
 }

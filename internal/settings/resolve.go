@@ -82,6 +82,28 @@ func resolvePath(value, key, command, env string) (string, error) {
 	return expanded, nil
 }
 
+// Namespace returns the configured Galaxy/GitHub namespace for new roles. It
+// is an error when namespace is not set.
+//
+// Unlike the path settings there is no sensible default to fall back on: a
+// namespace baked into a published repository and its requirements entry is
+// awkward to change afterwards, so an unset value is reported rather than
+// guessed at.
+func Namespace() (string, error) {
+	cfg, err := Load()
+	if err != nil {
+		return "", err
+	}
+
+	if cfg.Namespace == "" {
+		return "", fmt.Errorf(
+			"namespace is not configured (run 'ansible-dev config namespace <name>', " +
+				"or pass --namespace)")
+	}
+
+	return cfg.Namespace, nil
+}
+
 // RolesPath returns the configured roles repository directory, with "~"
 // expanded. It is an error when roles_path is unset or does not name an
 // existing directory.

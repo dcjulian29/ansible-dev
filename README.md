@@ -19,16 +19,18 @@ print the exact location or `ansible-dev config show` to dump the current values
 commented file you can copy is included as
 [ansible-dev.yml.example](ansible-dev.yml.example).
 
-Two settings are required before the role and runbook commands will work:
+Three settings are required before the role and runbook commands will work:
 
 | Setting | Purpose |
 | --- | --- |
 | `roles_path` | Directory holding your published role repositories. Required by `role compare` and `role new --publish`. |
 | `runbooks_path` | Directory holding your published runbook repositories. Required by `runbook compare` and `runbook new`. |
+| `namespace` | Galaxy/GitHub namespace new roles belong to. Required by `role new`. |
 
 ```shell
 ansible-dev config roles-path ~/code/ansible/roles
 ansible-dev config runbooks-path ~/code/ansible/runbooks
+ansible-dev config namespace dcjulian29
 ```
 
 Both accept an absolute directory or a `~/`-rooted one. `~/` is expanded when the value is read
@@ -107,6 +109,31 @@ ansible-dev config diff-args -- -r --brief "{left}" "{right}"
 `ansible-dev role new <role>` scaffolds a role with `ansible-galaxy role init` and overlays the
 embedded template. The `--description` text is written into `meta/main.yml`, the generated
 `README.md`, and — with `--publish` — the GitHub repository description.
+
+### Namespace
+
+Every role belongs to a Galaxy/GitHub namespace, which fills `meta/main.yml`, the badges and
+`requirements.yml` snippet in the generated `README.md`, the published repository owner, and the
+entry added to your `requirements.yml`. It comes from the first of these that supplies one:
+
+1. `--namespace` (`-n`)
+2. a namespace written into the role argument — `role new acme.nginx`
+3. the configured `namespace` setting
+
+If none does, the command stops before creating anything rather than guessing — a namespace is
+awkward to change once it has been published.
+
+```shell
+ansible-dev role new nginx                    # dcjulian29.nginx, from the configuration
+ansible-dev role new nginx -n acme            # acme.nginx
+ansible-dev role new acme.nginx               # acme.nginx
+```
+
+The role directory is named exactly as you typed it, but `requirements.yml` and `meta/main.yml`
+always record the qualified `<namespace>.<name>` form, so both spellings above produce the same
+role identity.
+
+### Description
 
 That text is prefixed with `Ansible role to`, so write it as a verb phrase saying what the role
 does:

@@ -5,10 +5,10 @@ galaxy_info:
   description: !!ROLE_DESC!!
   galaxy_tags:
     - !!ROLE_NAME!!
-    - dcjulian29
+    - !!ROLE_NAMESPACE!!
   license: Apache-2.0
   min_ansible_version: "2.18.4"
-  namespace: dcjulian29
+  namespace: !!ROLE_NAMESPACE!!
   platforms:
     - name: Debian
       versions:
