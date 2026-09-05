@@ -47,9 +47,8 @@ import (
 // embedded role template (LICENSE, README, lint configuration, GitHub
 // workflows, meta/main.yml, ...) is overlaid with !!ROLE_NAME!! / !!ROLE_DESC!!
 // substituted. When --publish is set, the role is additionally copied to the
-// directory named by the ANSIBLE_ROLES environment variable, committed to a new
-// git repository, pushed to a freshly-created public GitHub repository, and
-// recorded in requirements.yml.
+// configured roles_path directory, committed to a new git repository, pushed to
+// a freshly-created public GitHub repository, and recorded in requirements.yml.
 //
 // Flags:
 //   - --force, -f:       force overwrite of an existing role directory.

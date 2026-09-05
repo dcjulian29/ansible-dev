@@ -22,22 +22,23 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dcjulian29/ansible-dev/internal/settings"
 	"github.com/dcjulian29/ansible-dev/internal/templates"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 )
 
 // NewRunbook renders the embedded runbook scaffolding into a new directory
-// named by the ANSIBLE_RUNBOOKS environment variable joined with name,
-// substituting !!RUNBOOK_NAME!! and !!RUNBOOK_DESC!!. It returns the absolute
-// path of the created directory.
+// under the configured runbooks_path joined with name, substituting
+// !!RUNBOOK_NAME!! and !!RUNBOOK_DESC!!. It returns the absolute path of the
+// created directory.
 //
 // Unlike a role, a runbook has no ansible-galaxy skeleton: the embedded
-// template is the entire scaffold. An error is returned if ANSIBLE_RUNBOOKS is
+// template is the entire scaffold. An error is returned if runbooks_path is
 // unset or the destination already exists.
 func NewRunbook(name, description string) (string, error) {
-	runbooks := os.Getenv("ANSIBLE_RUNBOOKS")
-	if len(runbooks) == 0 {
-		return "", fmt.Errorf("the 'ANSIBLE_RUNBOOKS' environment variable is not defined")
+	runbooks, err := settings.RunbooksPath()
+	if err != nil {
+		return "", err
 	}
 
 	dest := filepath.Join(strings.ReplaceAll(runbooks, "\\", string(os.PathSeparator)), name)

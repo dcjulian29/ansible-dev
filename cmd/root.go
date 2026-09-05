@@ -46,6 +46,7 @@ import (
 	"os"
 
 	"github.com/dcjulian29/ansible-dev/cmd/collection"
+	"github.com/dcjulian29/ansible-dev/cmd/config"
 	"github.com/dcjulian29/ansible-dev/cmd/destroy"
 	"github.com/dcjulian29/ansible-dev/cmd/initialize"
 	"github.com/dcjulian29/ansible-dev/cmd/inventory"
@@ -118,6 +119,7 @@ func Execute() {
 // configured [cobra.Command].
 func init() {
 	rootCmd.AddCommand(collection.NewCommand())
+	rootCmd.AddCommand(config.NewCommand())
 	rootCmd.AddCommand(destroy.NewCommand())
 	rootCmd.AddCommand(initialize.NewCommand())
 	rootCmd.AddCommand(inventory.NewCommand())

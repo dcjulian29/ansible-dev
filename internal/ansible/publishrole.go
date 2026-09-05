@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dcjulian29/ansible-dev/internal/settings"
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 )
@@ -39,19 +40,19 @@ func BaseRoleName(role string) string {
 }
 
 // PublishRole copies a freshly-scaffolded role from its workspace location
-// into the directory named by the ANSIBLE_ROLES environment variable (using
-// the role's bare name), initializes a git repository there, and then creates
-// and pushes a public GitHub repository named "ansible-role-<name>".
+// into the configured roles_path directory (using the role's bare name),
+// initializes a git repository there, and then creates and pushes a public
+// GitHub repository named "ansible-role-<name>".
 //
 // It relies on the "git" and "gh" executables being installed and, in the case
-// of gh, already authenticated. An error is returned if ANSIBLE_ROLES is unset,
+// of gh, already authenticated. An error is returned if roles_path is unset,
 // the destination already exists, or any external command fails.
 func PublishRole(workspaceDir, role, description string) error {
 	base := BaseRoleName(role)
 
-	roles := os.Getenv("ANSIBLE_ROLES")
-	if len(roles) == 0 {
-		return fmt.Errorf("the 'ANSIBLE_ROLES' environment variable is not defined")
+	roles, err := settings.RolesPath()
+	if err != nil {
+		return err
 	}
 
 	dest := filepath.Join(strings.ReplaceAll(roles, "\\", string(os.PathSeparator)), base)

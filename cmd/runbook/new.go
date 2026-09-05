@@ -32,11 +32,11 @@ import (
 //
 //	ansible-dev runbook new <runbook> [flags]
 //
-// The runbook is rendered into the directory named by the ANSIBLE_RUNBOOKS
-// environment variable joined with <runbook>, with !!RUNBOOK_NAME!! and
-// !!RUNBOOK_DESC!! substituted. When --publish is set, the directory is
-// committed to a new git repository and pushed to a freshly-created public
-// GitHub repository named "ansible-runbook-<runbook>".
+// The runbook is rendered into the configured runbooks_path directory joined
+// with <runbook>, with !!RUNBOOK_NAME!! and !!RUNBOOK_DESC!! substituted.
+// When --publish is set, the directory is committed to a new git repository and
+// pushed to a freshly-created public GitHub repository named
+// "ansible-runbook-<runbook>".
 //
 // Flags:
 //   - --description, -d: description text substituted for !!RUNBOOK_DESC!! in

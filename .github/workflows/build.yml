@@ -7,14 +7,37 @@ name: ansible-dev Tool
       - '**.go'
       - 'go.mod'
       - 'go.sum'
+      - 'ansible-dev.yml.example'
 
   pull_request:
     paths:
       - '**.go'
       - 'go.mod'
       - 'go.sum'
+      - 'ansible-dev.yml.example'
 
 jobs:
+  test:
+    if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-2022
+          - ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v6
+        with:
+          cache-dependency-path: ${{ github.workspace }}/go.sum
+          go-version-file: ${{ github.workspace }}/go.mod
+
+      - run: go test ./...
+
   build:
     if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
     runs-on: windows-2022

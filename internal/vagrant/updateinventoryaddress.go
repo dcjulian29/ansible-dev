@@ -32,7 +32,7 @@ func UpdateInventoryAddress(filename, name, addr string) error {
 		return err
 	}
 
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	var lines []string
 
