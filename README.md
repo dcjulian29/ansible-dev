@@ -62,8 +62,9 @@ ansible-dev config role-ignore clear
 
 The external diff tool is configured per operating system, so one file can serve several machines
 and supporting a new platform is just a new entry. Only the entry for the host you are running on
-is consulted, and the compare commands report an error when it has no program set — unless they
-are run with `--no-diff`.
+is consulted, and it is looked up only when a diff is about to open — so a missing diff program is
+reported only when something actually differs, never on a clean comparison and never under
+`--no-diff`.
 
 ```shell
 ansible-dev config diff-program "C:\Program Files\WinMerge\winmergeu.exe"

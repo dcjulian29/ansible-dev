@@ -48,8 +48,10 @@ import (
 //
 // When differences are detected the command opens the diff tool configured for
 // the current operating system (see "ansible-dev config diff-program"),
-// substituting the role_filter into its argument template. Unless --no-diff is
-// given, it is an error when no diff program is configured for this OS.
+// substituting the role_filter into its argument template. The diff tool is
+// resolved only when a diff is about to open, so a missing diff program is an
+// error only if something actually differs — never when --no-diff is given and
+// never when every role matches.
 //
 // Flags:
 //   - --checksum:  print per-file hash comparisons to stdout. Matching
@@ -86,12 +88,12 @@ func compareCmd() *cobra.Command {
 			var launch func(left, right string) error
 
 			if !nodiff {
-				diff, err := settings.Diff()
-				if err != nil {
-					return err
-				}
-
 				launch = func(left, right string) error {
+					diff, err := settings.Diff()
+					if err != nil {
+						return err
+					}
+
 					program, args := diff.Command(diff.RoleFilter, left, right)
 
 					return execute.ExternalProgram(program, args...)

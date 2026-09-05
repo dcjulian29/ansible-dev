@@ -49,6 +49,10 @@ import (
 // the installed copy's runtime artifacts (MANIFEST.json, FILES.json). Runbooks
 // present under runbooks_path but not installed are reported and skipped.
 //
+// The diff tool is resolved only when a diff is about to open, so a missing
+// diff program is an error only if something actually differs — never when
+// --no-diff is given and never when every runbook matches.
+//
 // Flags:
 //   - --checksum: print per-file hash comparisons.
 //   - --no-diff:  do not launch the graphical diff tool on differences.
@@ -80,12 +84,12 @@ func compareCmd() *cobra.Command {
 			var launch func(left, right string) error
 
 			if !nodiff {
-				diff, err := settings.Diff()
-				if err != nil {
-					return err
-				}
-
 				launch = func(left, right string) error {
+					diff, err := settings.Diff()
+					if err != nil {
+						return err
+					}
+
 					program, args := diff.Command(diff.RunbookFilter, left, right)
 
 					return execute.ExternalProgram(program, args...)
