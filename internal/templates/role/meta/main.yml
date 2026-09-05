@@ -2,7 +2,7 @@
 dependencies: []
 galaxy_info:
   author: Julian Easterling
-  description: Ansible role to !!ROLE_DESC!!
+  description: !!ROLE_DESC!!
   galaxy_tags:
     - !!ROLE_NAME!!
     - dcjulian29

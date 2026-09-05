@@ -2,7 +2,7 @@
 
 [![Lint](https://github.com/dcjulian29/ansible-role-!!ROLE_NAME!!/actions/workflows/lint.yml/badge.svg)](https://github.com/dcjulian29/ansible-role-!!ROLE_NAME!!/actions/workflows/lint.yml) [![GitHub Issues](https://img.shields.io/github/issues-raw/dcjulian29/ansible-role-!!ROLE_NAME!!.svg)](https://github.com/dcjulian29/ansible-role-!!ROLE_NAME!!/issues)
 
-This an Ansible role to !!ROLE_DESC!!
+!!ROLE_DESC!!
 
 ## Requirements
 

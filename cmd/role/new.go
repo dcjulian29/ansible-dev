@@ -57,10 +57,18 @@ import (
 //   - --verbose, -v:     forward the verbose flag to [ansible.NewRole] so
 //     that ansible-galaxy prints additional debug messages during
 //     initialization (default false).
-//   - --description, -d: description text substituted for !!ROLE_DESC!! in
-//     the template and used for the published repository (default empty).
+//   - --description, -d: what the role does, written as a verb phrase. It is
+//     composed by [ansible.RoleDescription] into the text substituted for
+//     !!ROLE_DESC!! in the template and used for the published repository
+//     (default empty).
+//   - --no-prefix:       use the description verbatim rather than prefixing it
+//     with "Ansible role to" (default false).
 //   - --publish, -p:     create and push a public GitHub repository for the
 //     role via git and gh, then add it to requirements.yml (default false).
+//
+// The composed description is printed before the template is applied, so the
+// added phrase is visible at the point it is chosen rather than only in the
+// generated files.
 func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <role>",
@@ -100,7 +108,16 @@ func newCmd() *cobra.Command {
 				}
 			}
 
-			description, _ := cmd.Flags().GetString("description")
+			raw, _ := cmd.Flags().GetString("description")
+			noprefix, _ := cmd.Flags().GetBool("no-prefix")
+			description := ansible.RoleDescription(raw, !noprefix)
+
+			// The composed description is what lands in meta/main.yml, the
+			// README, and the published repository, so show it rather than
+			// leaving the caller to discover the added phrase afterwards.
+			if description != "" {
+				fmt.Println(textformat.Info(fmt.Sprintf("described as '%s'", description)))
+			}
 
 			if err := ansible.ApplyRoleTemplate(folder, role, description); err != nil {
 				return err
@@ -139,7 +156,10 @@ func newCmd() *cobra.Command {
 
 	cmd.Flags().BoolP("force", "f", false, "force overwriting an existing role")
 	cmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
-	cmd.Flags().StringP("description", "d", "", "description of the role (fills the template)")
+	cmd.Flags().StringP("description", "d", "",
+		"what the role does, as a verb phrase completing \"Ansible role to ...\"")
+	cmd.Flags().Bool("no-prefix", false,
+		"use the description verbatim instead of prefixing it with \"Ansible role to\"")
 	cmd.Flags().BoolP("publish", "p", false, "create and push a public GitHub repository for the role")
 
 	return cmd

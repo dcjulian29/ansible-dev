@@ -101,3 +101,28 @@ its own flags and fails with `unknown shorthand flag`:
 ```shell
 ansible-dev config diff-args -- -r --brief "{left}" "{right}"
 ```
+
+## Creating a role
+
+`ansible-dev role new <role>` scaffolds a role with `ansible-galaxy role init` and overlays the
+embedded template. The `--description` text is written into `meta/main.yml`, the generated
+`README.md`, and — with `--publish` — the GitHub repository description.
+
+That text is prefixed with `Ansible role to`, so write it as a verb phrase saying what the role
+does:
+
+```shell
+ansible-dev role new nginx -d "install and configure nginx"
+# described as 'Ansible role to install and configure nginx'
+```
+
+The composed description is printed as the role is created, so the added phrase is visible when you
+choose it rather than only afterwards in the generated files.
+
+Pass `--no-prefix` when the description is already a complete sentence, which would otherwise read
+as "Ansible role to Manages the nginx configuration":
+
+```shell
+ansible-dev role new nginx --no-prefix -d "Manages the nginx configuration"
+# described as 'Manages the nginx configuration'
+```

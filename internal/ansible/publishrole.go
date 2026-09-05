@@ -44,6 +44,10 @@ func BaseRoleName(role string) string {
 // initializes a git repository there, and then creates and pushes a public
 // GitHub repository named "ansible-role-<name>".
 //
+// The description is used for the GitHub repository exactly as passed; compose
+// it with [RoleDescription] so the published repository, meta/main.yml, and the
+// generated README all describe the role the same way.
+//
 // It relies on the "git" and "gh" executables being installed and, in the case
 // of gh, already authenticated. An error is returned if roles_path is unset,
 // the destination already exists, or any external command fails.
@@ -89,5 +93,5 @@ func PublishRole(workspaceDir, role, description string) error {
 		"--push",
 		"--public",
 		"--disable-wiki",
-		"--description", "An Ansible role to "+description)
+		"--description", description)
 }
