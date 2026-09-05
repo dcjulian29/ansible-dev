@@ -87,3 +87,11 @@ The arguments are a template: `{left}` and `{right}` are replaced with the two d
 compared, and `{filter}` with the role or runbook filter for the comparison being run. When that
 filter is empty, a standalone `{filter}` argument is dropped along with the flag immediately
 before it, so no dangling flag is passed to the diff tool.
+
+The WinMerge example above uses `/`-style switches, which pass through untouched. A tool that
+takes Unix-style flags needs `--` first, otherwise `ansible-dev` treats a leading `-` as one of
+its own flags and fails with `unknown shorthand flag`:
+
+```shell
+ansible-dev config diff-args -- -r --brief "{left}" "{right}"
+```
