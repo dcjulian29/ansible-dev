@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/dcjulian29/go-toolbox v0.33.0
-	github.com/olekukonko/tablewriter v1.1.4
+	github.com/olekukonko/tablewriter v1.1.5
 	github.com/spf13/cobra v1.10.2
 	go.szostok.io/version v1.2.0
 	gopkg.in/ini.v1 v1.67.3
