@@ -46,6 +46,8 @@ var playFromFlags ansible.Play
 //     (maps to [ansible.Play.AskVaultPass]).
 //   - --ask-become-password:  prompt for the privilege escalation password
 //     (maps to [ansible.Play.AskBecomePass]).
+//   - --check, -C:            run without making changes, reporting what
+//     would change (maps to [ansible.Play.Check]).
 //   - --flush-cache:          clear the Ansible fact cache before the run
 //     (maps to [ansible.Play.FlushCache]).
 //   - --step, -s:             confirm each task before running
@@ -72,6 +74,7 @@ func NewCommand() *cobra.Command {
 			playFromFlags.Tags, _ = cmd.Flags().GetStringSlice("tags")
 			playFromFlags.AskBecomePass, _ = cmd.Flags().GetBool("becomepass")
 			playFromFlags.AskVaultPass, _ = cmd.Flags().GetBool("vaultpass")
+			playFromFlags.Check, _ = cmd.Flags().GetBool("check")
 			playFromFlags.FlushCache, _ = cmd.Flags().GetBool("flushcache")
 			playFromFlags.Step, _ = cmd.Flags().GetBool("step")
 			playFromFlags.Verbose, _ = cmd.Flags().GetBool("verbose")
@@ -99,6 +102,7 @@ func NewCommand() *cobra.Command {
 	cmd.Flags().BoolP("verbose", "v", false, "tell Ansible to print more debug messages")
 	cmd.Flags().Bool("ask-vault-password", false, "ask for vault password")
 	cmd.Flags().Bool("ask-become-password", false, "ask for privilege escalation password")
+	cmd.Flags().BoolP("check", "C", false, "don't make any changes; report what would change")
 	cmd.Flags().Bool("flush-cache", false, "clear the fact cache for every host in inventory")
 	cmd.Flags().BoolP("step", "s", false, "one-step-at-a-time: confirm each task before running")
 	cmd.Flags().StringSlice("tags", []string{}, "only plays and task tagged with these values")
