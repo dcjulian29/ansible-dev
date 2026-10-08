@@ -23,6 +23,7 @@ package ansible
 //   - Tags:          optional Ansible tags used to limit which tasks are executed.
 //   - AskVaultPass:  when true, the --ask-vault-password flag is passed to ansible-playbook.
 //   - AskBecomePass: when true, the --ask-become-pass flag is passed to ansible-playbook.
+//   - Check:         when true, the --check flag is passed so no changes are made.
 //   - FlushCache:    when true, the --flush-cache flag is passed to clear the fact cache.
 //   - Step:          when true, the --step flag is passed so each task must be confirmed.
 //   - Verbose:       when true, the -v flag is passed for increased output verbosity.
@@ -31,6 +32,7 @@ type Play struct {
 	Tags          []string
 	AskVaultPass  bool
 	AskBecomePass bool
+	Check         bool
 	FlushCache    bool
 	Step          bool
 	Verbose       bool

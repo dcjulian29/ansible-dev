@@ -42,6 +42,10 @@ func ExecutePlay(play Play) error {
 		param = append(param, "--flush-cache")
 	}
 
+	if play.Check {
+		param = append(param, "--check")
+	}
+
 	if play.AskVaultPass {
 		param = append(param, "--ask-vault-password")
 	}
