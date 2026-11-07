@@ -7,7 +7,7 @@ galaxy_info:
     - !!ROLE_NAME!!
     - !!ROLE_NAMESPACE!!
   license: Apache-2.0
-  min_ansible_version: "2.18.4"
+  min_ansible_version: "!!ANSIBLE_VERSION!!"
   namespace: !!ROLE_NAMESPACE!!
   platforms:
     - name: Debian

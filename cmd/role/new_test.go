@@ -133,7 +133,7 @@ func TestResolveNamespace_RejectsAnInvalidRoleNamespace(t *testing.T) {
 func TestNewCmd_RegistersItsFlags(t *testing.T) {
 	cmd := newCmd()
 
-	for _, name := range []string{"namespace", "description", "no-prefix", "force", "verbose", "publish"} {
+	for _, name := range []string{"namespace", "description", "no-prefix", "force", "verbose", "publish", "version"} {
 		if cmd.Flags().Lookup(name) == nil {
 			t.Errorf("flag --%s is not registered", name)
 		}

@@ -184,7 +184,7 @@ func TestRemainingSentinels_DetectsThem(t *testing.T) {
 func TestApplyRoleTemplate_LeavesNoUnsubstitutedSentinels(t *testing.T) {
 	dest := t.TempDir()
 
-	err := ApplyRoleTemplate(dest, "acme", "acme.nginx", "Ansible role to install nginx")
+	err := ApplyRoleTemplate(dest, "acme", "acme.nginx", "Ansible role to install nginx", "2.21.5")
 	if err != nil {
 		t.Fatalf("ApplyRoleTemplate() error = %v, want nil", err)
 	}
@@ -197,7 +197,7 @@ func TestApplyRoleTemplate_LeavesNoUnsubstitutedSentinels(t *testing.T) {
 func TestApplyRoleTemplate_FillsNamespaceNameAndDescription(t *testing.T) {
 	dest := t.TempDir()
 
-	err := ApplyRoleTemplate(dest, "acme", "acme.nginx", "Ansible role to install nginx")
+	err := ApplyRoleTemplate(dest, "acme", "acme.nginx", "Ansible role to install nginx", "2.21.5")
 	if err != nil {
 		t.Fatalf("ApplyRoleTemplate() error = %v, want nil", err)
 	}
@@ -208,6 +208,7 @@ func TestApplyRoleTemplate_FillsNamespaceNameAndDescription(t *testing.T) {
 		"namespace: acme",
 		"role_name: nginx", // the bare name, with the namespace stripped
 		"description: Ansible role to install nginx",
+		`min_ansible_version: "2.21.5"`, // quoted, so the meta schema sees a string
 	} {
 		if !strings.Contains(meta, want) {
 			t.Errorf("meta/main.yml missing %q:\n%s", want, meta)
@@ -236,7 +237,7 @@ func TestApplyRoleTemplate_FillsNamespaceNameAndDescription(t *testing.T) {
 func TestApplyRoleTemplate_IncludesDotfiles(t *testing.T) {
 	dest := t.TempDir()
 
-	if err := ApplyRoleTemplate(dest, "acme", "nginx", "x"); err != nil {
+	if err := ApplyRoleTemplate(dest, "acme", "nginx", "x", "2.21.5"); err != nil {
 		t.Fatalf("ApplyRoleTemplate() error = %v, want nil", err)
 	}
 

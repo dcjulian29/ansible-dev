@@ -36,16 +36,20 @@ import (
 //
 // The positional argument <role> is the name of the role to create, either bare
 // ("nginx") or qualified with a namespace ("dcjulian29.nginx"). A qualified name
-// supplies the namespace; see --namespace below. If a role directory already
-// exists at the resolved path (checked via [ansible.RoleFolderExists]):
+// supplies the namespace; see --namespace below. Either way the role is created
+// in roles_path as "<namespace>.<name>". If a role directory already exists at
+// that path (checked via [ansible.RoleFolderExists]):
 //   - Without --force: the command returns an error prompting the user
 //     to pass --force to replace the existing role.
 //   - With --force: the existing directory is removed via
 //     [filesystem.RemoveDirectory] before the new role is scaffolded.
 //
-// If no argument is supplied, the help text is displayed instead.
+// Exactly one argument is required; without it cobra reports the missing
+// argument and the command exits non-zero.
 //
-// After scaffolding, the ansible-galaxy "tests" folder is removed and the
+// After scaffolding, the ansible-galaxy "tests" folder is removed, the
+// placeholder main.yml in "handlers" and "vars" is deleted (the folders stay),
+// and the
 // embedded role template (LICENSE, README, lint configuration, GitHub
 // workflows, meta/main.yml, ...) is overlaid with !!ROLE_NAME!! / !!ROLE_DESC!!
 // substituted. When --publish is set, the role is additionally copied to the
@@ -73,6 +77,9 @@ import (
 //     with "Ansible role to" (default false).
 //   - --publish, -p:     create and push a public GitHub repository for the
 //     role via git and gh, then add it to requirements.yml (default false).
+//   - --version:         the min_ansible_version written into meta/main.yml,
+//     as "2.21" or "2.21.5". Defaults to the ansible-core version that
+//     ansible-galaxy reports, i.e. the one the role is developed on.
 //
 // The composed description is printed before the template is applied, so the
 // added phrase is visible at the point it is chosen rather than only in the
@@ -115,11 +122,10 @@ func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <role>",
 		Short: "Create a new Ansible role in the development environment",
+		// A missing name is an error, not a request for help: printing the help
+		// and exiting 0 made it look as if the flags were being rejected.
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
 			role := args[0]
 
 			// Resolved before anything is created: the namespace is baked into
@@ -136,12 +142,22 @@ func newCmd() *cobra.Command {
 
 			fmt.Println(textformat.Info(fmt.Sprintf("creating role '%s'", qualified)))
 
+			// The development copy is always named "<namespace>.<name>", like
+			// every other role under roles_path, whichever form was typed. The
+			// existence check, --force and ansible-galaxy must all use this one
+			// name: checking one folder and removing another would let --force
+			// delete the wrong role. (The published clone keeps the bare name;
+			// see [ansible.PublishRole].)
 			force, _ := cmd.Flags().GetBool("force")
-			folder, _ := ansible.RoleFolder(role)
 
-			if ansible.RoleFolderExists(role) {
+			folder, err := ansible.RoleFolder(qualified)
+			if err != nil {
+				return err
+			}
+
+			if ansible.RoleFolderExists(qualified) {
 				if !force {
-					return fmt.Errorf("role '%s' exists. Use '--force' to replace", role)
+					return fmt.Errorf("role '%s' exists. Use '--force' to replace", qualified)
 				}
 
 				if err := filesystem.RemoveDirectory(folder); err != nil {
@@ -149,9 +165,29 @@ func newCmd() *cobra.Command {
 				}
 			}
 
+			// min_ansible_version in meta/main.yml: --version when given,
+			// otherwise the installed version, since that is what the role is
+			// developed and tested on. Settled before ansible-galaxy init,
+			// like the namespace, so a bad value or an Ansible that cannot
+			// report its version stops before a half-made role exists.
+			ansibleVersion, _ := cmd.Flags().GetString("version")
+
+			if ansibleVersion != "" {
+				if err := ansible.ValidateAnsibleVersion(ansibleVersion); err != nil {
+					return err
+				}
+			} else {
+				ansibleVersion, err = ansible.AnsibleVersion()
+				if err != nil {
+					return err
+				}
+			}
+
 			verbose, _ := cmd.Flags().GetBool("verbose")
 
-			if err := ansible.NewRole(role, verbose); err != nil {
+			// ansible-galaxy init accepts a dotted role name and creates the
+			// folder under exactly that name, so no rename is needed afterwards.
+			if err := ansible.NewRole(qualified, verbose); err != nil {
 				return err
 			}
 
@@ -160,6 +196,20 @@ func newCmd() *cobra.Command {
 			tests := filepath.Join(folder, "tests")
 			if filesystem.DirectoryExist(tests) {
 				if err := filesystem.RemoveDirectory(tests); err != nil {
+					return err
+				}
+			}
+
+			// handlers/ and vars/ stay, since a new role often grows into
+			// them, but their generated main.yml holds nothing except an
+			// MIT-0 SPDX header (which contradicts the Apache-2.0 license and
+			// fails yaml[comments]) and a placeholder comment. Remove the
+			// files and leave the folders empty; git does not track an empty
+			// folder, so nothing unused is published. defaults/ and tasks/
+			// keep theirs: the template overlay below replaces each main.yml
+			// with a clean one.
+			for _, unused := range []string{"handlers", "vars"} {
+				if err := filesystem.RemoveFile(filepath.Join(folder, unused, "main.yml")); err != nil {
 					return err
 				}
 			}
@@ -175,7 +225,7 @@ func newCmd() *cobra.Command {
 				fmt.Println(textformat.Info(fmt.Sprintf("described as '%s'", description)))
 			}
 
-			if err := ansible.ApplyRoleTemplate(folder, namespace, role, description); err != nil {
+			if err := ansible.ApplyRoleTemplate(folder, namespace, role, description, ansibleVersion); err != nil {
 				return err
 			}
 
@@ -222,6 +272,8 @@ func newCmd() *cobra.Command {
 	cmd.Flags().Bool("no-prefix", false,
 		"use the description verbatim instead of prefixing it with \"Ansible role to\"")
 	cmd.Flags().BoolP("publish", "p", false, "create and push a public GitHub repository for the role")
+	cmd.Flags().String("version", "",
+		"min_ansible_version for meta/main.yml, as 2.21 or 2.21.5 (default: the installed ansible-core version)")
 
 	return cmd
 }
