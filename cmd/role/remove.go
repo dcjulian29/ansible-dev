@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
@@ -40,7 +41,9 @@ import (
 // After a successful removal the updated manifest is persisted via
 // [ansible.SaveRequirements] and an informational message is printed.
 //
-// If no argument is supplied, the help text is displayed instead.
+// The argument is checked by [cmdargs.Required]: typed bare, the command
+// prints its help and exits 0; given flags but no role name, it fails with
+// "expects a role name".
 //
 // Flags:
 //   - --purge: additionally remove the role's installed files from disk
@@ -58,11 +61,11 @@ func removeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove <role>",
 		Short: "Remove Ansible role from requirements.yml",
+		// Checked in Args rather than RunE so a bare "role remove" prints its
+		// help even outside a development folder, where PreRunE would fail
+		// first, and "role remove --purge" names the missing role.
+		Args: cmdargs.Required("a role name"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
 			var changed []ansible.Role
 
 			role := args[0]
