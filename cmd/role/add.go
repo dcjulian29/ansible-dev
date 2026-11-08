@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
@@ -42,8 +43,9 @@ import (
 //     Defaults to the empty string (latest).
 //
 // The command prints a reminder that the role must be restored (installed
-// via "ansible-dev restore") before it can be used. If no argument is
-// supplied, the help text is displayed instead.
+// via "ansible-dev restore") before it can be used. The argument is checked by
+// [cmdargs.Required]: typed bare, the command prints its help and exits 0;
+// given flags but no role name, it fails with "expects a role name".
 //
 // Note: this command only modifies requirements.yml — it does not
 // download or install the role files. Use "ansible-dev restore" to
@@ -56,11 +58,10 @@ func addCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add <role>",
 		Short: "Add Ansible role to requirements.yml",
+		// Checked in Args rather than RunE so a bare "role add" prints its help
+		// even outside a development folder, where PreRunE would fail first.
+		Args: cmdargs.Required("a role name"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
 			name := args[0]
 
 			source, _ := cmd.Flags().GetString("source")
