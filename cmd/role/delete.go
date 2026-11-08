@@ -18,6 +18,7 @@ package role
 
 import (
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +38,9 @@ import (
 // [filesystem.RemoveDirectory]. If the role directory does not exist,
 // the command exits silently without error.
 //
-// If no argument is supplied, the help text is displayed instead.
+// The argument is checked by [cmdargs.Required]: typed bare, the command
+// prints its help and exits 0; given more than one role name, it fails
+// without deleting anything.
 //
 // Note: this command only deletes the on-disk role files. It does not
 // modify requirements.yml. To remove a role from the manifest, use
@@ -50,11 +53,11 @@ func deleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete <role>",
 		Short: "Remove Ansible role files from the development environment",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
+		// Checked in Args rather than RunE so a bare "role delete" prints its
+		// help even outside a development folder, and "role delete a b" is
+		// refused before anything is deleted instead of quietly ignoring b.
+		Args: cmdargs.Required("a role name"),
+		RunE: func(_ *cobra.Command, args []string) error {
 			role := args[0]
 			folder, _ := ansible.RoleFolder(role)
 
