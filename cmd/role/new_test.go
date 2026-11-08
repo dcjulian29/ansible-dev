@@ -130,6 +130,34 @@ func TestResolveNamespace_RejectsAnInvalidRoleNamespace(t *testing.T) {
 	}
 }
 
+// The cmdargs package tests the rule itself; this pins that "role new" uses it.
+// Neither case gets past the Args check, so PreRunE and RunE never run and
+// nothing is created.
+func TestNewCmd_MissingRoleName(t *testing.T) {
+	execute := func(args ...string) (string, error) {
+		cmd := newCmd()
+
+		var out strings.Builder
+
+		cmd.SetOut(&out)
+		cmd.SetErr(&out)
+		cmd.SetArgs(args)
+
+		err := cmd.Execute()
+
+		return out.String(), err
+	}
+
+	out, err := execute()
+	if err != nil || !strings.Contains(out, "Usage:") {
+		t.Errorf("bare: error = %v, output = %q; want the help and no error", err, out)
+	}
+
+	if _, err := execute("-d", "install nginx"); err == nil || err.Error() != "expects a role name" {
+		t.Errorf("flags only: error = %v, want %q", err, "expects a role name")
+	}
+}
+
 func TestNewCmd_RegistersItsFlags(t *testing.T) {
 	cmd := newCmd()
 

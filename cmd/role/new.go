@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/ansible-dev/internal/settings"
 	"github.com/dcjulian29/go-toolbox/filesystem"
 	"github.com/dcjulian29/go-toolbox/textformat"
@@ -44,8 +45,10 @@ import (
 //   - With --force: the existing directory is removed via
 //     [filesystem.RemoveDirectory] before the new role is scaffolded.
 //
-// Exactly one argument is required; without it cobra reports the missing
-// argument and the command exits non-zero.
+// Exactly one argument is required, checked by [cmdargs.Required]: typed bare,
+// the command prints its help and exits 0; given flags but no role name, it
+// fails with "expects a role name". Both happen even outside a development
+// folder.
 //
 // After scaffolding, the ansible-galaxy "tests" folder is removed, the
 // placeholder main.yml in "handlers" and "vars" is deleted (the folders stay),
@@ -128,9 +131,10 @@ func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <role>",
 		Short: "Create a new Ansible role in the development environment",
-		// A missing name is an error, not a request for help: printing the help
-		// and exiting 0 made it look as if the flags were being rejected.
-		Args: cobra.ExactArgs(1),
+		// A bare "role new" prints the help; with flags but no name it fails
+		// with "expects a role name". Checked in Args so both happen even
+		// outside a development folder, before PreRunE can fail first.
+		Args: cmdargs.Required("a role name"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			role := args[0]
 
