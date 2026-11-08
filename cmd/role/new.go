@@ -88,7 +88,10 @@ import (
 //     repeat it for each platform. Names are checked against the Galaxy list
 //     and versions are always quoted. Defaults to Debian trixie and EL 10.
 //
-// All flags are checked before an existing role is removed by --force.
+// All flags are checked before an existing role is removed by --force. With
+// --publish, so is requirements.yml: a missing or unparseable file, or a role
+// already listed in it, stops the command before anything is created or
+// pushed. The entry is saved only after publishing succeeds.
 //
 // The composed description is printed before the template is applied, so the
 // added phrase is visible at the point it is chosen rather than only in the
@@ -179,6 +182,34 @@ func newCmd() *cobra.Command {
 
 			qualified := ansible.QualifiedRoleName(namespace, role)
 
+			// With --publish, the requirements.yml entry is added now, in
+			// memory, and saved only once publishing succeeds. Doing it here,
+			// before --force or ansible-galaxy touch anything and before the
+			// repository is pushed, means a missing or broken file, or a role
+			// already listed, stops the command while there is nothing to undo.
+			publish, _ := cmd.Flags().GetBool("publish")
+
+			var requirements *ansible.RequirementsDocument
+
+			if publish {
+				requirements, err = ansible.OpenRequirements()
+				if err != nil {
+					return err
+				}
+
+				// Recorded under the qualified name even when the role argument
+				// was bare, so requirements.yml matches what the role calls
+				// itself in meta/main.yml.
+				err = requirements.AddRole(ansible.Role{
+					Name: qualified,
+					Source: fmt.Sprintf("https://github.com/%s/ansible-role-%s.git",
+						namespace, ansible.BaseRoleName(role)),
+				})
+				if err != nil {
+					return err
+				}
+			}
+
 			fmt.Println(textformat.Info(fmt.Sprintf("creating role '%s'", qualified)))
 
 			// The development copy is always named "<namespace>.<name>", like
@@ -250,7 +281,6 @@ func newCmd() *cobra.Command {
 				return err
 			}
 
-			publish, _ := cmd.Flags().GetBool("publish")
 			if !publish {
 				return nil
 			}
@@ -259,18 +289,9 @@ func newCmd() *cobra.Command {
 				return err
 			}
 
-			base := ansible.BaseRoleName(role)
-
-			// Recorded under the qualified name even when the role argument was
-			// bare, so requirements.yml matches what the role calls itself in
-			// meta/main.yml.
-			requirements, _ := ansible.ReadRequirements()
-			requirements.Roles = append(requirements.Roles, ansible.Role{
-				Name:   qualified,
-				Source: fmt.Sprintf("https://github.com/%s/ansible-role-%s.git", namespace, base),
-			})
-
-			if err := ansible.SaveRequirements(requirements); err != nil {
+			// The entry was added before anything was created; save it now
+			// that the repository it points at exists.
+			if err := requirements.Save(); err != nil {
 				return err
 			}
 
