@@ -42,6 +42,11 @@ import (
 //   - --version, -v: pin the role to a specific version string.
 //     Defaults to the empty string (latest).
 //
+// The role is appended through [ansible.OpenRequirements], which leaves the
+// rest of requirements.yml untouched. A role already listed under the same
+// name is an error, as is a requirements.yml that is missing or does not
+// parse.
+//
 // The command prints a reminder that the role must be restored (installed
 // via "ansible-dev restore") before it can be used. The argument is checked by
 // [cmdargs.Required]: typed bare, the command prints its help and exits 0;
@@ -71,7 +76,10 @@ func addCmd() *cobra.Command {
 				source = name // Ansible Galaxy Role
 			}
 
-			requirements, _ := ansible.ReadRequirements()
+			requirements, err := ansible.OpenRequirements()
+			if err != nil {
+				return err
+			}
 
 			role := ansible.Role{
 				Name:    name,
@@ -79,9 +87,12 @@ func addCmd() *cobra.Command {
 				Version: version,
 			}
 
-			requirements.Roles = append(requirements.Roles, role)
+			// A role already listed is refused rather than added a second time.
+			if err := requirements.AddRole(role); err != nil {
+				return err
+			}
 
-			if err := ansible.SaveRequirements(requirements); err != nil {
+			if err := requirements.Save(); err != nil {
 				return err
 			}
 
