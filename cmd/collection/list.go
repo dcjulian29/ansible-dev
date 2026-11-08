@@ -69,7 +69,14 @@ func listCmd() *cobra.Command {
 				table := tablewriter.NewTable(os.Stdout, tablewriter.WithTrimSpace(tw.Off))
 
 				for _, c := range requirements.Collections {
-					row := []string{c.Name, c.Source, c.Type, c.Version}
+					// An entry without "type:" is installed from Galaxy, which is
+					// ansible-galaxy's default; show that rather than a blank.
+					kind := c.Type
+					if kind == "" {
+						kind = "galaxy"
+					}
+
+					row := []string{c.Name, c.Source, kind, c.Version}
 					if err := table.Append(row); err != nil {
 						return nil
 					}
