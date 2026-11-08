@@ -32,13 +32,19 @@ import (
 //	ansible-dev collection add <collection> [flags]
 //
 // The positional argument <collection> is the fully qualified collection
-// name (e.g. "community.general"). If no --source flag is provided, the
-// collection name is used as the source, implying it will be fetched from
-// Ansible Galaxy. The collection type is always set to "galaxy".
+// name (e.g. "community.general"). Without --source the entry is just the
+// name, which ansible-galaxy installs from Galaxy. With --source it is
+// written as a git collection (type: git, source: <url>), like the
+// dcjulian29 runbook entries.
+//
+// The entry is appended through [ansible.OpenRequirements], which leaves the
+// rest of requirements.yml untouched. A collection already listed under the
+// same name is an error, as is a requirements.yml that is missing or does not
+// parse.
 //
 // Flags:
-//   - --source, -s: override the source URL or Galaxy reference for the
-//     collection. Defaults to the collection name when omitted.
+//   - --source, -s: the git repository URL to install the collection from.
+//     Omit it for a Galaxy collection.
 //   - --version, -v: pin the collection to a specific version string.
 //     Defaults to the empty string (latest).
 //
@@ -62,22 +68,24 @@ func addCmd() *cobra.Command {
 			source, _ := cmd.Flags().GetString("source")
 			version, _ := cmd.Flags().GetString("version")
 
-			if len(name) > 0 && len(source) == 0 {
-				source = name // Ansible Galaxy Collection
+			requirements, err := ansible.OpenRequirements()
+			if err != nil {
+				return err
 			}
 
-			requirements, _ := ansible.ReadRequirements()
+			collection := ansible.Collection{Name: name, Version: version}
 
-			collection := ansible.Collection{
-				Name:    name,
-				Source:  source,
-				Type:    "galaxy",
-				Version: version,
+			if source != "" {
+				collection.Type = "git"
+				collection.Source = source
 			}
 
-			requirements.Collections = append(requirements.Collections, collection)
+			// A collection already listed is refused rather than added twice.
+			if err := requirements.AddCollection(collection); err != nil {
+				return err
+			}
 
-			if err := ansible.SaveRequirements(requirements); err != nil {
+			if err := requirements.Save(); err != nil {
 				return err
 			}
 
@@ -91,7 +99,7 @@ func addCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringP("source", "s", "", "source of the collection")
+	cmd.Flags().StringP("source", "s", "", "git repository URL of the collection (omit for Galaxy)")
 	cmd.Flags().StringP("version", "v", "", "version of the collection")
 
 	return cmd
