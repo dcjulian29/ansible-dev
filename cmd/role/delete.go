@@ -59,7 +59,15 @@ func deleteCmd() *cobra.Command {
 		Args: cmdargs.Required("a role name"),
 		RunE: func(_ *cobra.Command, args []string) error {
 			role := args[0]
-			folder, _ := ansible.RoleFolder(role)
+
+			// An ansible.cfg without a readable roles_path must stop the
+			// command: RoleFolderExists hits the same error and reports false,
+			// so ignoring it here made a delete that removed nothing exit 0
+			// as if it had succeeded.
+			folder, err := ansible.RoleFolder(role)
+			if err != nil {
+				return err
+			}
 
 			if ansible.RoleFolderExists(role) {
 				if err := filesystem.RemoveDirectory(folder); err != nil {
