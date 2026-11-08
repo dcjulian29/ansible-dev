@@ -79,7 +79,10 @@ func ApplyTemplate(src fs.FS, dest string, replacements map[string]string) error
 // ansibleVersion becomes min_ansible_version in meta/main.yml. Callers pass
 // [AnsibleVersion] so the value tracks the Ansible the role is developed on,
 // rather than a number in the template that goes stale with every upgrade.
-func ApplyRoleTemplate(dir, namespace, role, description, ansibleVersion string) error {
+//
+// platforms replaces !!ROLE_PLATFORMS!!, the list under galaxy_info.platforms;
+// see [ParsePlatforms] and [DefaultPlatforms].
+func ApplyRoleTemplate(dir, namespace, role, description, ansibleVersion string, platforms []Platform) error {
 	src, err := templates.Role()
 	if err != nil {
 		return err
@@ -90,5 +93,6 @@ func ApplyRoleTemplate(dir, namespace, role, description, ansibleVersion string)
 		"!!ROLE_NAME!!":       BaseRoleName(role),
 		"!!ROLE_DESC!!":       description,
 		"!!ANSIBLE_VERSION!!": ansibleVersion,
+		"!!ROLE_PLATFORMS!!":  renderPlatforms(platforms),
 	})
 }

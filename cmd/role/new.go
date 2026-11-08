@@ -80,6 +80,12 @@ import (
 //   - --version:         the min_ansible_version written into meta/main.yml,
 //     as "2.21" or "2.21.5". Defaults to the ansible-core version that
 //     ansible-galaxy reports, i.e. the one the role is developed on.
+//   - --platform:        a platform the role supports, as
+//     NAME:VERSION[,VERSION...] (for example "Debian:trixie,bookworm");
+//     repeat it for each platform. Names are checked against the Galaxy list
+//     and versions are always quoted. Defaults to Debian trixie and EL 10.
+//
+// All flags are checked before an existing role is removed by --force.
 //
 // The composed description is printed before the template is applied, so the
 // added phrase is visible at the point it is chosen rather than only in the
@@ -138,6 +144,35 @@ func newCmd() *cobra.Command {
 				return err
 			}
 
+			// Every flag is checked here, before --force can remove an existing
+			// role, so a bad value never costs the role it was meant to replace.
+
+			// min_ansible_version in meta/main.yml: --version when given,
+			// otherwise the installed version, since that is what the role is
+			// developed and tested on. An Ansible that cannot report its
+			// version stops the command here too.
+			ansibleVersion, _ := cmd.Flags().GetString("version")
+
+			if ansibleVersion != "" {
+				if err := ansible.ValidateAnsibleVersion(ansibleVersion); err != nil {
+					return err
+				}
+			} else {
+				ansibleVersion, err = ansible.AnsibleVersion()
+				if err != nil {
+					return err
+				}
+			}
+
+			// galaxy_info.platforms in meta/main.yml: each --platform value, or
+			// Debian trixie + EL 10 when none is given.
+			values, _ := cmd.Flags().GetStringArray("platform")
+
+			platforms, err := ansible.ParsePlatforms(values)
+			if err != nil {
+				return err
+			}
+
 			qualified := ansible.QualifiedRoleName(namespace, role)
 
 			fmt.Println(textformat.Info(fmt.Sprintf("creating role '%s'", qualified)))
@@ -161,24 +196,6 @@ func newCmd() *cobra.Command {
 				}
 
 				if err := filesystem.RemoveDirectory(folder); err != nil {
-					return err
-				}
-			}
-
-			// min_ansible_version in meta/main.yml: --version when given,
-			// otherwise the installed version, since that is what the role is
-			// developed and tested on. Settled before ansible-galaxy init,
-			// like the namespace, so a bad value or an Ansible that cannot
-			// report its version stops before a half-made role exists.
-			ansibleVersion, _ := cmd.Flags().GetString("version")
-
-			if ansibleVersion != "" {
-				if err := ansible.ValidateAnsibleVersion(ansibleVersion); err != nil {
-					return err
-				}
-			} else {
-				ansibleVersion, err = ansible.AnsibleVersion()
-				if err != nil {
 					return err
 				}
 			}
@@ -225,7 +242,7 @@ func newCmd() *cobra.Command {
 				fmt.Println(textformat.Info(fmt.Sprintf("described as '%s'", description)))
 			}
 
-			if err := ansible.ApplyRoleTemplate(folder, namespace, role, description, ansibleVersion); err != nil {
+			if err := ansible.ApplyRoleTemplate(folder, namespace, role, description, ansibleVersion, platforms); err != nil {
 				return err
 			}
 
@@ -274,6 +291,10 @@ func newCmd() *cobra.Command {
 	cmd.Flags().BoolP("publish", "p", false, "create and push a public GitHub repository for the role")
 	cmd.Flags().String("version", "",
 		"min_ansible_version for meta/main.yml, as 2.21 or 2.21.5 (default: the installed ansible-core version)")
+	// StringArray, not StringSlice: a slice flag splits on commas, which would
+	// cut "Debian:trixie,bookworm" into two invalid values.
+	cmd.Flags().StringArray("platform", nil,
+		"supported platform for meta/main.yml as NAME:VERSION[,VERSION...]; repeatable (default: Debian:trixie and EL:10)")
 
 	return cmd
 }

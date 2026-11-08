@@ -10,10 +10,5 @@ galaxy_info:
   min_ansible_version: "!!ANSIBLE_VERSION!!"
   namespace: !!ROLE_NAMESPACE!!
   platforms:
-    - name: Debian
-      versions:
-        - trixie
-    - name: EL
-      versions:
-        - "10"
+!!ROLE_PLATFORMS!!
   role_name: !!ROLE_NAME!!
