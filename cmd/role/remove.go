@@ -33,13 +33,14 @@ import (
 //	ansible-dev role remove <role> [flags]
 //
 // The positional argument <role> is the role name to remove (e.g.
-// "dcjulian29.docker"). The command reads the current requirements via
-// [ansible.ReadRequirements], searches for a role whose Name field
-// matches the argument exactly, and splices it out of the list. If no
-// matching role is found, an error is returned.
+// "dcjulian29.docker"). The command opens requirements.yml via
+// [ansible.OpenRequirements] and removes every roles entry whose name
+// matches the argument exactly, leaving the rest of the file untouched. If no
+// matching role is found, an error is returned; so is a requirements.yml that
+// is missing or does not parse.
 //
-// After a successful removal the updated manifest is persisted via
-// [ansible.SaveRequirements] and an informational message is printed.
+// After a successful removal the file is saved, even when no roles are left,
+// and an informational message is printed.
 //
 // The argument is checked by [cmdargs.Required]: typed bare, the command
 // prints its help and exits 0; given flags but no role name, it fails with
@@ -66,32 +67,28 @@ func removeCmd() *cobra.Command {
 		// first, and "role remove --purge" names the missing role.
 		Args: cmdargs.Required("a role name"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var changed []ansible.Role
-
 			role := args[0]
-			requirements, _ := ansible.ReadRequirements()
-			found := false
 
-			for i, r := range requirements.Roles {
-				if r.Name == role {
-					changed = append(requirements.Roles[:i], requirements.Roles[i+1:]...)
-					found = true
-				}
+			requirements, err := ansible.OpenRequirements()
+			if err != nil {
+				return err
+			}
+
+			found, err := requirements.RemoveRole(role)
+			if err != nil {
+				return err
 			}
 
 			if !found {
 				return fmt.Errorf("role '%s' not present", role)
 			}
 
-			if len(changed) > 0 {
-				requirements.Roles = changed
-				if err := ansible.SaveRequirements(requirements); err != nil {
-					return err
-				}
-
-				msg := fmt.Sprintf("role '%s' removed from requirements.yml", role)
-				fmt.Println(textformat.Info(msg))
+			if err := requirements.Save(); err != nil {
+				return err
 			}
+
+			msg := fmt.Sprintf("role '%s' removed from requirements.yml", role)
+			fmt.Println(textformat.Info(msg))
 
 			if r, _ := cmd.Flags().GetBool("purge"); r {
 				return ansible.RemoveRole(role)
