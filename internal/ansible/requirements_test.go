@@ -93,7 +93,14 @@ roles:
 	}
 
 	if len(got.Collections) != 1 || got.Collections[0].Name != "dcjulian29.workstation" {
-		t.Errorf("Collections = %+v, want one entry named dcjulian29.workstation", got.Collections)
+		t.Fatalf("Collections = %+v, want one entry named dcjulian29.workstation", got.Collections)
+	}
+
+	// "source:" is the collections' key; reading it as the roles' "src:"
+	// left every git collection's URL empty in "collection list".
+	c := got.Collections[0]
+	if c.Source != "https://github.com/dcjulian29/ansible-runbook-workstation.git" || c.Type != "git" {
+		t.Errorf("Collections[0] = %+v, want the git type and source URL", c)
 	}
 }
 
