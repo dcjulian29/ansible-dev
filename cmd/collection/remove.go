@@ -31,11 +31,12 @@ import (
 //
 //	ansible-dev collection remove <collection>
 //
-// The positional argument <collection> is matched against the Name field of
-// each [ansible.Collection] entry in requirements.yml. If a match is found,
-// the entry is removed and the updated requirements are written back to
-// disk via [ansible.SaveRequirements]. A confirmation message is printed to
-// stdout on success.
+// The positional argument <collection> is matched against the name of each
+// collections entry in requirements.yml, opened via
+// [ansible.OpenRequirements]. Every match is removed and the file is saved,
+// leaving the rest of it untouched, even when no collections are left. A
+// confirmation message is printed to stdout on success. A requirements.yml
+// that is missing or does not parse is an error.
 //
 // If no argument is supplied, the help text is displayed. If the named
 // collection is not present in requirements.yml, an error is returned.
@@ -55,29 +56,30 @@ func removeCmd() *cobra.Command {
 				return cmd.Help()
 			}
 
-			var changed []ansible.Collection
-
 			collection := args[0]
-			requirements, _ := ansible.ReadRequirements()
 
-			for i, r := range requirements.Collections {
-				if r.Name == collection {
-					changed = append(requirements.Collections[:i], requirements.Collections[i+1:]...)
-				}
+			requirements, err := ansible.OpenRequirements()
+			if err != nil {
+				return err
 			}
 
-			if len(changed) > 0 {
-				requirements.Collections = changed
-				if err := ansible.SaveRequirements(requirements); err != nil {
-					return err
-				}
-
-				msg := fmt.Sprintf("collection '%s' removed from requirements.yml", collection)
-				fmt.Println(textformat.Info(msg))
-				return nil
+			found, err := requirements.RemoveCollection(collection)
+			if err != nil {
+				return err
 			}
 
-			return fmt.Errorf("collection '%s' not present", collection)
+			if !found {
+				return fmt.Errorf("collection '%s' not present", collection)
+			}
+
+			if err := requirements.Save(); err != nil {
+				return err
+			}
+
+			msg := fmt.Sprintf("collection '%s' removed from requirements.yml", collection)
+			fmt.Println(textformat.Info(msg))
+
+			return nil
 		},
 		PreRunE: func(_ *cobra.Command, _ []string) error {
 			return ansible.EnsureAnsibleDirectory()
