@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -42,8 +43,8 @@ type RequirementsDocument struct {
 // OpenRequirements reads requirements.yml for editing. A missing file, a read
 // failure, or YAML that does not parse is an error: carrying on with an empty
 // document would make the next Save replace the whole file with the one entry
-// being added. An empty document ("---" alone) is valid and opens as an empty
-// mapping.
+// being added. An empty document ("---" alone, or only comments) is valid and
+// opens as an empty mapping, keeping any comments at the top.
 func OpenRequirements() (*RequirementsDocument, error) {
 	if err := EnsureRequirementsFile(); err != nil {
 		return nil, err
@@ -63,10 +64,23 @@ func OpenRequirements() (*RequirementsDocument, error) {
 	// An empty file decodes to a zero node and "---" alone to a document
 	// holding a null scalar; both become a document with an empty mapping so
 	// entries can be added to it.
+	//
+	// A file holding only comments takes the same path, and its comments
+	// would be lost with the old node: yaml.v3 keeps them as the document's
+	// foot comment after "---", and drops them entirely without it, so they
+	// are recovered from the raw text. They become the new document's head
+	// comment, staying at the top of the file above the entries added.
 	if doc.Kind == 0 || (len(doc.Content) == 1 && doc.Content[0].Tag == "!!null") {
+		comments := strings.TrimSpace(doc.FootComment)
+
+		if doc.Kind == 0 {
+			comments = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(string(data)), "---"))
+		}
+
 		doc = yaml.Node{
-			Kind:    yaml.DocumentNode,
-			Content: []*yaml.Node{{Kind: yaml.MappingNode, Tag: "!!map"}},
+			Kind:        yaml.DocumentNode,
+			HeadComment: comments,
+			Content:     []*yaml.Node{{Kind: yaml.MappingNode, Tag: "!!map"}},
 		}
 	}
 

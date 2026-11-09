@@ -248,6 +248,34 @@ func TestRequirementsDocument_AddToAFlowStyleList(t *testing.T) {
 	}
 }
 
+// A file holding only comments used to lose them on the first add: yaml.v3
+// keeps them as a foot comment after "---" and drops them without it, and
+// the empty document was rebuilt from scratch.
+func TestRequirementsDocument_AddKeepsCommentsOfACommentOnlyFile(t *testing.T) {
+	added := "roles:\n  - name: acme.x\n    src: acme.x\n"
+
+	for name, tc := range map[string]struct{ content, want string }{
+		"with ---":    {"---\n# pinned for prod\n", "---\n# pinned for prod\n\n" + added},
+		"without ---": {"# pinned for prod\n", "---\n# pinned for prod\n\n" + added},
+		"two blocks":  {"---\n# top\n\n# second\n", "---\n# top\n\n# second\n\n" + added},
+		"--- alone":   {"---\n", "---\n" + added},
+	} {
+		t.Run(name, func(t *testing.T) {
+			requirementsProject(t, tc.content)
+
+			doc := openRequirements(t)
+
+			if err := doc.AddRole(Role{Name: "acme.x", Source: "acme.x"}); err != nil {
+				t.Fatal(err)
+			}
+
+			if got := save(t, doc); got != tc.want {
+				t.Errorf("requirements.yml =\n%s\nwant\n%s", got, tc.want)
+			}
+		})
+	}
+}
+
 // Each of these must stop the command: opening an empty document instead
 // would let the next Save replace the file with a single entry.
 func TestOpenRequirements_Errors(t *testing.T) {
