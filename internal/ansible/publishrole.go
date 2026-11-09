@@ -39,6 +39,26 @@ func BaseRoleName(role string) string {
 	return role
 }
 
+// PublishDestination returns the folder [PublishRole] copies role into: the
+// role's bare name under the configured roles_path. An error is returned if
+// roles_path is unset or the folder already exists. It is exported so "role
+// new --publish" can check it before --force removes the development copy,
+// rather than learning from PublishRole that publishing was never possible.
+func PublishDestination(role string) (string, error) {
+	roles, err := settings.RolesPath()
+	if err != nil {
+		return "", err
+	}
+
+	dest := filepath.Join(strings.ReplaceAll(roles, "\\", string(os.PathSeparator)), BaseRoleName(role))
+
+	if filesystem.DirectoryExist(dest) {
+		return "", fmt.Errorf("published role already exists at '%s'", dest)
+	}
+
+	return dest, nil
+}
+
 // PublishRole copies a freshly-scaffolded role from its workspace location
 // into the configured roles_path directory (using the role's bare name),
 // initializes a git repository there, and then creates and pushes a public
@@ -54,15 +74,9 @@ func BaseRoleName(role string) string {
 func PublishRole(workspaceDir, namespace, role, description string) error {
 	base := BaseRoleName(role)
 
-	roles, err := settings.RolesPath()
+	dest, err := PublishDestination(role)
 	if err != nil {
 		return err
-	}
-
-	dest := filepath.Join(strings.ReplaceAll(roles, "\\", string(os.PathSeparator)), base)
-
-	if filesystem.DirectoryExist(dest) {
-		return fmt.Errorf("published role already exists at '%s'", dest)
 	}
 
 	if err := filesystem.EnsureDirectoryExist(filepath.Dir(dest)); err != nil {

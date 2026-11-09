@@ -192,6 +192,13 @@ func newCmd() *cobra.Command {
 			var requirements *ansible.RequirementsDocument
 
 			if publish {
+				// An existing published clone (or an unset roles_path) would
+				// otherwise only stop PublishRole after --force had already
+				// deleted and re-scaffolded the development copy.
+				if _, err := ansible.PublishDestination(role); err != nil {
+					return err
+				}
+
 				requirements, err = ansible.OpenRequirements()
 				if err != nil {
 					return err

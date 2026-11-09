@@ -18,10 +18,12 @@ package role
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/dcjulian29/ansible-dev/internal/settings"
 	"github.com/spf13/cobra"
 )
 
@@ -155,6 +157,60 @@ func TestNewCmd_MissingRoleName(t *testing.T) {
 
 	if _, err := execute("-d", "install nginx"); err == nil || err.Error() != "expects a role name" {
 		t.Errorf("flags only: error = %v, want %q", err, "expects a role name")
+	}
+}
+
+// An existing published clone used to be found only by PublishRole, after
+// --force had already deleted the development copy and scaffolded a new one.
+// It must stop the command first, with the existing role untouched.
+func TestNewCmd_PublishStopsBeforeForceWhenTheCloneExists(t *testing.T) {
+	published := t.TempDir()
+
+	if err := os.Mkdir(filepath.Join(published, "x"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := settings.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Restored afterwards: the configuration is a process-wide cache, and the
+	// namespace tests above depend on it holding nothing.
+	original := cfg
+	t.Cleanup(func() { settings.Save(&original) }) //nolint:errcheck
+
+	cfg.RolesPath = published
+	if err := settings.Save(&cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Chdir(t.TempDir())
+
+	if err := os.WriteFile("ansible.cfg", []byte("[defaults]\nroles_path = ./roles\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	keep := filepath.Join("roles", "acme.x", "keep.txt")
+
+	if err := os.MkdirAll(filepath.Dir(keep), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(keep, []byte("existing role"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := newCmd()
+	cmd.SetArgs([]string{"acme.x", "--force", "--publish", "--version", "2.21"})
+
+	err = cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "published role already exists") {
+		t.Errorf("role new error = %v, want the existing published role reported", err)
+	}
+
+	if _, err := os.Stat(keep); err != nil {
+		t.Errorf("--force removed the development role before the check: %v", err)
 	}
 }
 
