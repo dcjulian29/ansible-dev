@@ -36,6 +36,14 @@ jobs:
           cache-dependency-path: ${{ github.workspace }}/go.sum
           go-version-file: ${{ github.workspace }}/go.mod
 
+      # The role scaffold lint test (cmd/role) runs ansible-galaxy, yamllint
+      # and ansible-lint. ansible-lint does not run on Windows, so only the
+      # ubuntu job installs them; the test skips on Windows and fails here if
+      # they are missing. --include-deps exposes the ansible-core and yamllint
+      # commands that ansible-lint pulls in.
+      - if: runner.os == 'Linux'
+        run: pipx install --include-deps ansible-lint
+
       - run: go test ./...
 
   build:
