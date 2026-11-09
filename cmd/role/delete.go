@@ -17,9 +17,12 @@ limitations under the License.
 package role
 
 import (
+	"fmt"
+
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
 	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/go-toolbox/filesystem"
+	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
 
@@ -32,11 +35,11 @@ import (
 //	ansible-dev role delete <role>
 //
 // The positional argument <role> is the role name (e.g.
-// "dcjulian29.docker"). The command resolves the role's directory via
-// [ansible.RoleFolder] and, if the directory exists (checked with
-// [ansible.RoleFolderExists]), removes it entirely using
-// [filesystem.RemoveDirectory]. If the role directory does not exist,
-// the command exits silently without error.
+// "dcjulian29.docker"). A bare name is resolved by
+// [ansible.InstalledRoleName]: the folder as typed if it exists, otherwise
+// "<configured namespace>.<name>", the form "role new" creates. The folder is
+// then removed entirely using [filesystem.RemoveDirectory]. If no folder
+// exists, the command fails with "role '<name>' folder not present".
 //
 // The argument is checked by [cmdargs.Required]: typed bare, the command
 // prints its help and exits 0; given more than one role name, it fails
@@ -58,7 +61,9 @@ func deleteCmd() *cobra.Command {
 		// refused before anything is deleted instead of quietly ignoring b.
 		Args: cmdargs.Required("a role name"),
 		RunE: func(_ *cobra.Command, args []string) error {
-			role := args[0]
+			// "role new nginx" creates roles/<namespace>.nginx, so a bare name
+			// is resolved to that folder when no roles/nginx exists.
+			role := ansible.InstalledRoleName(args[0])
 
 			// An ansible.cfg without a readable roles_path must stop the
 			// command: RoleFolderExists hits the same error and reports false,
@@ -69,11 +74,17 @@ func deleteCmd() *cobra.Command {
 				return err
 			}
 
-			if ansible.RoleFolderExists(role) {
-				if err := filesystem.RemoveDirectory(folder); err != nil {
-					return err
-				}
+			// A missing folder used to exit 0 silently, so a mistyped or
+			// unqualified name looked like a successful delete.
+			if !ansible.RoleFolderExists(role) {
+				return fmt.Errorf("role '%s' folder not present", role)
 			}
+
+			if err := filesystem.RemoveDirectory(folder); err != nil {
+				return err
+			}
+
+			fmt.Println(textformat.Info(fmt.Sprintf("role '%s' files were deleted", role)))
 
 			return nil
 		},
