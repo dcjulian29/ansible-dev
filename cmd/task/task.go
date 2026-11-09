@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/ansible-dev/internal/vagrant"
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/spf13/cobra"
@@ -31,7 +32,9 @@ import (
 
 // NewCommand creates and returns the Cobra command for "ansible-dev tasks",
 // which lists every task that would be executed for the specified Ansible
-// role. The command requires exactly one positional argument.
+// role. The command requires exactly one positional argument, checked by
+// [cmdargs.Required]: typed bare, it prints its help and exits 0; given flags
+// but no role name, it fails with "expects a role name".
 //
 // Usage:
 //
@@ -68,12 +71,13 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tasks <role>",
 		Short: "List all tasks that would be executed in the role",
-		Args:  cobra.ExactArgs(1),
+		// cmdargs.Required rather than cobra.ExactArgs(1): a bare "tasks"
+		// prints the help instead of cobra's generic "accepts 1 arg(s)", even
+		// outside a development folder, and "tasks --tags x" names the
+		// missing role. The len(args) check that used to sit in RunE could
+		// never run, since Args had already refused an empty list.
+		Args: cmdargs.Required("a role name"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
 			err := ansible.GenerateRolePlay(args[0])
 			if err != nil {
 				return err
