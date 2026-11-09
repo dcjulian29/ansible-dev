@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
@@ -38,8 +39,10 @@ import (
 // confirmation message is printed to stdout on success. A requirements.yml
 // that is missing or does not parse is an error.
 //
-// If no argument is supplied, the help text is displayed. If the named
-// collection is not present in requirements.yml, an error is returned.
+// The argument is checked by [cmdargs.Required]: typed bare, the command
+// prints its help and exits 0; given more than one collection name, it fails
+// without changing anything. If the named collection is not present in
+// requirements.yml, an error is returned.
 //
 // Note: this command only modifies requirements.yml — it does not
 // uninstall the collection files from the collections_path. Use
@@ -51,11 +54,11 @@ func removeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove <collection>",
 		Short: "Remove Ansible collection from requirements.yml",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
+		// Checked in Args rather than RunE so a bare "collection remove" prints
+		// its help even outside a development folder, and "collection remove a
+		// b" is refused instead of quietly ignoring b.
+		Args: cmdargs.Required("a collection name"),
+		RunE: func(_ *cobra.Command, args []string) error {
 			collection := args[0]
 
 			requirements, err := ansible.OpenRequirements()
