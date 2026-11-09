@@ -69,9 +69,20 @@ func listCmd() *cobra.Command {
 				table := tablewriter.NewTable(os.Stdout, tablewriter.WithTrimSpace(tw.Off))
 
 				for _, c := range requirements.Collections {
-					row := []string{c.Name, c.Source, c.Type, c.Version}
+					// An entry without "type:" is installed from Galaxy, which is
+					// ansible-galaxy's default; show that rather than a blank.
+					kind := c.Type
+					if kind == "" {
+						kind = "galaxy"
+					}
+
+					// Type before source, the same order as the entries'
+					// keys in requirements.yml.
+					row := []string{c.Name, kind, c.Source, c.Version}
+					// Returned, not swallowed: "return nil" here stopped the
+					// listing with no output and exit 0.
 					if err := table.Append(row); err != nil {
-						return nil
+						return err
 					}
 				}
 

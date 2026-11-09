@@ -25,6 +25,7 @@ import (
 	"testing/fstest"
 
 	"github.com/dcjulian29/ansible-dev/internal/templates"
+	"gopkg.in/yaml.v3"
 )
 
 func read(t *testing.T, path string) string {
@@ -184,7 +185,8 @@ func TestRemainingSentinels_DetectsThem(t *testing.T) {
 func TestApplyRoleTemplate_LeavesNoUnsubstitutedSentinels(t *testing.T) {
 	dest := t.TempDir()
 
-	err := ApplyRoleTemplate(dest, "acme", "acme.nginx", "Ansible role to install nginx")
+	err := ApplyRoleTemplate(dest, "acme", "acme.nginx", "Ansible role to install nginx", "2.21.5",
+		DefaultPlatforms())
 	if err != nil {
 		t.Fatalf("ApplyRoleTemplate() error = %v, want nil", err)
 	}
@@ -197,7 +199,8 @@ func TestApplyRoleTemplate_LeavesNoUnsubstitutedSentinels(t *testing.T) {
 func TestApplyRoleTemplate_FillsNamespaceNameAndDescription(t *testing.T) {
 	dest := t.TempDir()
 
-	err := ApplyRoleTemplate(dest, "acme", "acme.nginx", "Ansible role to install nginx")
+	err := ApplyRoleTemplate(dest, "acme", "acme.nginx", "Ansible role to install nginx", "2.21.5",
+		DefaultPlatforms())
 	if err != nil {
 		t.Fatalf("ApplyRoleTemplate() error = %v, want nil", err)
 	}
@@ -208,6 +211,7 @@ func TestApplyRoleTemplate_FillsNamespaceNameAndDescription(t *testing.T) {
 		"namespace: acme",
 		"role_name: nginx", // the bare name, with the namespace stripped
 		"description: Ansible role to install nginx",
+		`min_ansible_version: "2.21.5"`, // quoted, so the meta schema sees a string
 	} {
 		if !strings.Contains(meta, want) {
 			t.Errorf("meta/main.yml missing %q:\n%s", want, meta)
@@ -230,13 +234,65 @@ func TestApplyRoleTemplate_FillsNamespaceNameAndDescription(t *testing.T) {
 	}
 }
 
+// The platforms block is spliced into meta/main.yml as text, so parse the
+// result: a wrong indent would still read as plausible YAML but put the list
+// somewhere other than galaxy_info.platforms. Versions must arrive as strings.
+func TestApplyRoleTemplate_WritesPlatformsUnderGalaxyInfo(t *testing.T) {
+	dest := t.TempDir()
+
+	platforms := []Platform{
+		{Name: "Debian", Versions: []string{"trixie", "bookworm"}},
+		{Name: "EL", Versions: []string{"9", "10"}},
+	}
+
+	if err := ApplyRoleTemplate(dest, "acme", "nginx", "x", "2.21.5", platforms); err != nil {
+		t.Fatalf("ApplyRoleTemplate() error = %v, want nil", err)
+	}
+
+	var meta struct {
+		GalaxyInfo struct {
+			Platforms []struct {
+				Name     string `yaml:"name"`
+				Versions []any  `yaml:"versions"`
+			} `yaml:"platforms"`
+		} `yaml:"galaxy_info"`
+	}
+
+	if err := yaml.Unmarshal([]byte(read(t, filepath.Join(dest, "meta", "main.yml"))), &meta); err != nil {
+		t.Fatalf("meta/main.yml is not valid YAML: %v", err)
+	}
+
+	got := meta.GalaxyInfo.Platforms
+	if len(got) != len(platforms) {
+		t.Fatalf("galaxy_info.platforms has %d entries, want %d", len(got), len(platforms))
+	}
+
+	for i, want := range platforms {
+		if got[i].Name != want.Name {
+			t.Errorf("platform %d name = %q, want %q", i, got[i].Name, want.Name)
+		}
+
+		if len(got[i].Versions) != len(want.Versions) {
+			t.Errorf("platform %s has %d versions, want %d", want.Name, len(got[i].Versions), len(want.Versions))
+			continue
+		}
+
+		for j, v := range got[i].Versions {
+			// []any keeps the type YAML gave it: an unquoted 10 would be an int.
+			if s, ok := v.(string); !ok || s != want.Versions[j] {
+				t.Errorf("platform %s version %d = %#v, want the string %q", want.Name, j, v, want.Versions[j])
+			}
+		}
+	}
+}
+
 // The role template is dominated by dotfiles, which Go's embed directive skips
 // without the "all:" prefix. A regression there would silently produce roles
 // missing their lint and CI configuration, so assert a few are present.
 func TestApplyRoleTemplate_IncludesDotfiles(t *testing.T) {
 	dest := t.TempDir()
 
-	if err := ApplyRoleTemplate(dest, "acme", "nginx", "x"); err != nil {
+	if err := ApplyRoleTemplate(dest, "acme", "nginx", "x", "2.21.5", DefaultPlatforms()); err != nil {
 		t.Fatalf("ApplyRoleTemplate() error = %v, want nil", err)
 	}
 

@@ -7,7 +7,8 @@ rules:
     max-spaces-inside: 1
   comments:
     min-spaces-from-content: 1
-  comments-indentation: {}
+  # ansible-lint rejects this config as incompatible unless it is off.
+  comments-indentation: false
   indentation:
     indent-sequences: true
   line-length:

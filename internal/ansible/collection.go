@@ -22,11 +22,13 @@ package ansible
 // Fields:
 //   - Name:    the fully qualified collection name (e.g. "community.general").
 //   - Source:  an optional URL or Galaxy server where the collection is hosted.
+//     Collections use the key "source:", unlike roles, which use "src:"; with
+//     the roles' key, every git collection's URL read back empty.
 //   - Type:    the source type (e.g. "galaxy", "git", "url").
 //   - Version: an optional version constraint string (e.g. ">=2.0.0").
 type Collection struct {
 	Name    string `yaml:"name"`
-	Source  string `yaml:"src"`
+	Source  string `yaml:"source"`
 	Type    string `yaml:"type"`
 	Version string `yaml:"version"`
 }

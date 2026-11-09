@@ -18,10 +18,12 @@ package role
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/dcjulian29/ansible-dev/internal/settings"
 	"github.com/spf13/cobra"
 )
 
@@ -130,10 +132,118 @@ func TestResolveNamespace_RejectsAnInvalidRoleNamespace(t *testing.T) {
 	}
 }
 
+// The cmdargs package tests the rule itself; this pins that "role new" uses it.
+// Neither case gets past the Args check, so PreRunE and RunE never run and
+// nothing is created.
+func TestNewCmd_MissingRoleName(t *testing.T) {
+	execute := func(args ...string) (string, error) {
+		cmd := newCmd()
+
+		var out strings.Builder
+
+		cmd.SetOut(&out)
+		cmd.SetErr(&out)
+		cmd.SetArgs(args)
+
+		err := cmd.Execute()
+
+		return out.String(), err
+	}
+
+	out, err := execute()
+	if err != nil || !strings.Contains(out, "Usage:") {
+		t.Errorf("bare: error = %v, output = %q; want the help and no error", err, out)
+	}
+
+	if _, err := execute("-d", "install nginx"); err == nil || err.Error() != "expects a role name" {
+		t.Errorf("flags only: error = %v, want %q", err, "expects a role name")
+	}
+}
+
+// An existing published clone used to be found only by PublishRole, after
+// --force had already deleted the development copy and scaffolded a new one.
+// It must stop the command first, with the existing role untouched.
+func TestNewCmd_PublishStopsBeforeForceWhenTheCloneExists(t *testing.T) {
+	published := t.TempDir()
+
+	if err := os.Mkdir(filepath.Join(published, "x"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := settings.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Restored afterwards: the configuration is a process-wide cache, and the
+	// namespace tests above depend on it holding nothing.
+	original := cfg
+	t.Cleanup(func() { settings.Save(&original) }) //nolint:errcheck
+
+	cfg.RolesPath = published
+	if err := settings.Save(&cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Chdir(t.TempDir())
+
+	if err := os.WriteFile("ansible.cfg", []byte("[defaults]\nroles_path = ./roles\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	keep := filepath.Join("roles", "acme.x", "keep.txt")
+
+	if err := os.MkdirAll(filepath.Dir(keep), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(keep, []byte("existing role"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := newCmd()
+	cmd.SetArgs([]string{"acme.x", "--force", "--publish", "--version", "2.21"})
+
+	err = cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "published role already exists") {
+		t.Errorf("role new error = %v, want the existing published role reported", err)
+	}
+
+	if _, err := os.Stat(keep); err != nil {
+		t.Errorf("--force removed the development role before the check: %v", err)
+	}
+}
+
+// An existing role without --force used to be refused only after
+// "ansible-galaxy --version" had run (a container start on Windows). With PATH
+// empty that call would fail, so getting "exists" proves the refusal now comes
+// first; "creating role" is no longer printed before it either.
+func TestNewCmd_ExistingRoleIsRefusedBeforeAnsibleRuns(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	if err := os.WriteFile("ansible.cfg", []byte("[defaults]\nroles_path = ./roles\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.MkdirAll(filepath.Join("roles", "acme.x"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("PATH", "")
+
+	cmd := newCmd()
+	cmd.SetArgs([]string{"acme.x"})
+
+	err := cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "exists. Use '--force'") {
+		t.Errorf("role new error = %v, want the existing role refused before ansible-galaxy runs", err)
+	}
+}
+
 func TestNewCmd_RegistersItsFlags(t *testing.T) {
 	cmd := newCmd()
 
-	for _, name := range []string{"namespace", "description", "no-prefix", "force", "verbose", "publish"} {
+	for _, name := range []string{"namespace", "description", "no-prefix", "force", "verbose", "publish", "version", "platform"} {
 		if cmd.Flags().Lookup(name) == nil {
 			t.Errorf("flag --%s is not registered", name)
 		}

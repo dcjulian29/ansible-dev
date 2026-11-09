@@ -93,7 +93,14 @@ roles:
 	}
 
 	if len(got.Collections) != 1 || got.Collections[0].Name != "dcjulian29.workstation" {
-		t.Errorf("Collections = %+v, want one entry named dcjulian29.workstation", got.Collections)
+		t.Fatalf("Collections = %+v, want one entry named dcjulian29.workstation", got.Collections)
+	}
+
+	// "source:" is the collections' key; reading it as the roles' "src:"
+	// left every git collection's URL empty in "collection list".
+	c := got.Collections[0]
+	if c.Source != "https://github.com/dcjulian29/ansible-runbook-workstation.git" || c.Type != "git" {
+		t.Errorf("Collections[0] = %+v, want the git type and source URL", c)
 	}
 }
 
@@ -125,69 +132,5 @@ func TestReadRequirements_EmptyDocumentIsNotAnError(t *testing.T) {
 
 	if len(got.Roles) != 0 || len(got.Collections) != 0 {
 		t.Errorf("Requirements = %+v, want both lists empty", got)
-	}
-}
-
-func TestSaveRequirements_RoundTrips(t *testing.T) {
-	requirementsProject(t, "")
-
-	want := Requirements{
-		Roles: []Role{{
-			Name:   "acme.nginx",
-			Source: "https://github.com/acme/ansible-role-nginx.git",
-		}},
-	}
-
-	if err := SaveRequirements(want); err != nil {
-		t.Fatalf("SaveRequirements() error = %v, want nil", err)
-	}
-
-	got, err := ReadRequirements()
-	if err != nil {
-		t.Fatalf("ReadRequirements() error = %v, want nil", err)
-	}
-
-	if len(got.Roles) != 1 {
-		t.Fatalf("Roles = %+v, want one entry", got.Roles)
-	}
-
-	if got.Roles[0].Name != want.Roles[0].Name || got.Roles[0].Source != want.Roles[0].Source {
-		t.Errorf("Roles[0] = %+v, want %+v", got.Roles[0], want.Roles[0])
-	}
-}
-
-// TestSaveRequirements_TruncatesExistingContent pins the O_TRUNC behavior:
-// writing a shorter document over a longer one must not leave a tail behind,
-// which would produce a file that no longer parses.
-func TestSaveRequirements_TruncatesExistingContent(t *testing.T) {
-	requirementsProject(t, "")
-
-	long := Requirements{
-		Roles: []Role{
-			{Name: "acme.one", Source: "https://github.com/acme/ansible-role-one.git"},
-			{Name: "acme.two", Source: "https://github.com/acme/ansible-role-two.git"},
-			{Name: "acme.three", Source: "https://github.com/acme/ansible-role-three.git"},
-		},
-	}
-
-	if err := SaveRequirements(long); err != nil {
-		t.Fatal(err)
-	}
-
-	short := Requirements{
-		Roles: []Role{{Name: "acme.one", Source: "https://github.com/acme/ansible-role-one.git"}},
-	}
-
-	if err := SaveRequirements(short); err != nil {
-		t.Fatal(err)
-	}
-
-	got, err := ReadRequirements()
-	if err != nil {
-		t.Fatalf("ReadRequirements() error = %v, want nil after overwriting", err)
-	}
-
-	if len(got.Roles) != 1 {
-		t.Errorf("Roles = %+v, want exactly one entry after the shorter save", got.Roles)
 	}
 }

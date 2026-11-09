@@ -25,12 +25,11 @@ import (
 	"strings"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/ansible-dev/internal/vagrant"
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/spf13/cobra"
 )
-
-var shellCommand string
 
 // NewCommand creates and returns the Cobra command for "ansible-dev shell",
 // which runs an ad-hoc shell command on every host defined in the
@@ -52,8 +51,8 @@ var shellCommand string
 //	ansible -i hosts.ini -m shell -a "<command>" all
 //
 // targeting the "all" host pattern, which runs the command on every host
-// in the inventory. If no arguments are supplied, the help text is
-// displayed instead.
+// in the inventory. The arguments are checked by [cmdargs.AtLeastOne]: typed
+// bare (or with nothing after "--"), the command prints its help and exits 0.
 //
 // A PreRunE hook performs two checks before execution:
 //  1. [ansible.EnsureAnsibleDirectory] — verifies the current directory
@@ -65,23 +64,19 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "shell [flags] -- <command>",
 		Short: "Execute shell command in the Ansible development vagrant environment",
-		Args: func(_ *cobra.Command, args []string) error {
-			shellCommand = strings.Join(args, " ")
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
+		// Checked in Args so a bare "shell" (or "shell --") prints its help
+		// even outside a development folder, where PreRunE would fail first.
+		// The Args function used to accept anything and stash the joined
+		// words in a package variable for RunE; RunE now joins them itself.
+		Args: cmdargs.AtLeastOne("a shell command after --"),
+		RunE: func(_ *cobra.Command, args []string) error {
 			param := []string{
 				"-i", "hosts.ini",
 				"-m", "shell",
-				"-a", fmt.Sprintf("\"%s\"", shellCommand),
+				"-a", fmt.Sprintf("\"%s\"", strings.Join(args, " ")),
 				"all",
 			}
 
-			fmt.Println(param)
 			return execute.ExternalProgram("ansible", param...)
 		},
 		PreRunE: func(_ *cobra.Command, _ []string) error {

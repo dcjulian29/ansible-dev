@@ -23,11 +23,25 @@ import (
 	"errors"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/ansible-dev/internal/vagrant"
 	"github.com/spf13/cobra"
 )
 
-var playFromFlags ansible.Play
+func playFromFlags(cmd *cobra.Command, role string) ansible.Play {
+	flags := cmd.Flags()
+	play := ansible.Play{Name: role}
+
+	play.Tags, _ = flags.GetStringSlice("tags")
+	play.AskBecomePass, _ = flags.GetBool("ask-become-password")
+	play.AskVaultPass, _ = flags.GetBool("ask-vault-password")
+	play.Check, _ = flags.GetBool("check")
+	play.FlushCache, _ = flags.GetBool("flush-cache")
+	play.Step, _ = flags.GetBool("step")
+	play.Verbose, _ = flags.GetBool("verbose")
+
+	return play
+}
 
 // NewCommand creates and returns the Cobra command for "ansible-dev play".
 //
@@ -36,7 +50,9 @@ var playFromFlags ansible.Play
 //	ansible-dev play <role> [flags]
 //
 // The command requires exactly one positional argument — the name of the
-// Ansible role to apply. It generates a temporary single-role playbook via
+// Ansible role to apply — checked by [cmdargs.Required]: typed bare, it
+// prints its help and exits 0; given flags but no role name, it fails with
+// "expects a role name". It generates a temporary single-role playbook via
 // [ansible.GenerateRolePlay] and then executes it via [ansible.ExecutePlay].
 //
 // Flags are mapped to [ansible.Play] fields as follows:
@@ -66,24 +82,21 @@ var playFromFlags ansible.Play
 // status.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "play <role>",
-		Args:  cobra.ExactArgs(1),
+		Use: "play <role>",
+		// cmdargs.Required rather than cobra.ExactArgs(1): a bare "play"
+		// prints the help instead of cobra's generic "accepts 1 arg(s)", even
+		// outside a development folder, and "play --check" names the missing
+		// role.
+		Args:  cmdargs.Required("a role name"),
 		Short: "Provision ansible role to Ansible development vagrant environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			playFromFlags.Name = args[0]
-			playFromFlags.Tags, _ = cmd.Flags().GetStringSlice("tags")
-			playFromFlags.AskBecomePass, _ = cmd.Flags().GetBool("becomepass")
-			playFromFlags.AskVaultPass, _ = cmd.Flags().GetBool("vaultpass")
-			playFromFlags.Check, _ = cmd.Flags().GetBool("check")
-			playFromFlags.FlushCache, _ = cmd.Flags().GetBool("flushcache")
-			playFromFlags.Step, _ = cmd.Flags().GetBool("step")
-			playFromFlags.Verbose, _ = cmd.Flags().GetBool("verbose")
+			play := playFromFlags(cmd, args[0])
 
-			err := ansible.GenerateRolePlay(playFromFlags.Name)
+			err := ansible.GenerateRolePlay(play.Name)
 			if err != nil {
 				return err
 			}
-			err = ansible.ExecutePlay(playFromFlags)
+			err = ansible.ExecutePlay(play)
 			if err != nil {
 				return err
 			}

@@ -1,5 +1,5 @@
 ---
-skip_list: [ ]
+skip_list: []
 
 warn_list:
   - experimental

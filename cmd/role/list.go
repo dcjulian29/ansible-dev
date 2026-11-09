@@ -40,8 +40,8 @@ import (
 // Requirements mode (--requirements flag):
 // Reads the requirements.yml file via [ansible.ReadRequirements] and
 // renders a table to stdout containing each role's name, source, and
-// version. The requirements file is ensured to exist beforehand via
-// [ansible.EnsureRequirementsFile]. The table is rendered using the
+// version. A requirements.yml that is missing or does not parse is an error.
+// The table is rendered using the
 // tablewriter library with trimming disabled (tw.Off) to preserve
 // whitespace in field values.
 //
@@ -64,11 +64,14 @@ func listCmd() *cobra.Command {
 			verbose, _ := cmd.Flags().GetBool("verbose")
 
 			if required {
-				if err := ansible.EnsureRequirementsFile(); err != nil {
+				// ReadRequirements checks the file exists itself. Its error is
+				// returned: ignoring it printed an empty table and exited 0 for a
+				// requirements.yml that did not parse.
+				requirements, err := ansible.ReadRequirements()
+				if err != nil {
 					return err
 				}
 
-				requirements, _ := ansible.ReadRequirements()
 				table := tablewriter.NewTable(os.Stdout, tablewriter.WithTrimSpace(tw.Off))
 
 				for _, r := range requirements.Roles {
