@@ -77,7 +77,6 @@ func NewCommand() *cobra.Command {
 				"all",
 			}
 
-			fmt.Println(param)
 			return execute.ExternalProgram("ansible", param...)
 		},
 		PreRunE: func(_ *cobra.Command, _ []string) error {
