@@ -22,6 +22,7 @@ import (
 	"errors"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/ansible-dev/internal/vagrant"
 	"github.com/dcjulian29/go-toolbox/execute"
 	"github.com/spf13/cobra"
@@ -45,7 +46,8 @@ import (
 //     to parse the generated playbook and print all tags it contains.
 //     If the playbook execution fails, a descriptive error is returned.
 //
-// If no argument is supplied, the help text is displayed instead.
+// The argument is checked by [cmdargs.Required]: typed bare, the command
+// prints its help and exits 0; given more than one role name, it fails.
 //
 // This command is useful for discovering available tags before running
 // "ansible-dev play" or "ansible-dev start" with the --tag flag.
@@ -59,11 +61,11 @@ func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tags <role>",
 		Short: "List all available tags in the role",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
+		// Checked in Args rather than RunE so a bare "tags" prints its help
+		// even outside a development folder, where PreRunE would fail first,
+		// and "tags a b" is refused instead of quietly ignoring b.
+		Args: cmdargs.Required("a role name"),
+		RunE: func(_ *cobra.Command, args []string) error {
 			err := ansible.GenerateRolePlay(args[0])
 			if err != nil {
 				return err
