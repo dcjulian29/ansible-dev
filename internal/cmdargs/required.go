@@ -57,3 +57,22 @@ func Required(what string) cobra.PositionalArgs {
 		}
 	}
 }
+
+// AtLeastOne is [Required] for a command whose argument is a list of words
+// rather than a single name, such as "shell -- uptime" or "shell -- cat
+// /etc/hostname": any number of arguments from one up is accepted. With none,
+// it behaves exactly as Required does: the help when the command was typed
+// bare (a lone "--" counts as bare, since cobra drops it), and an error naming
+// what is missing when flags were given.
+func AtLeastOne(what string) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		switch {
+		case len(args) > 0:
+			return nil
+		case cmd.Flags().NFlag() == 0:
+			return pflag.ErrHelp
+		default:
+			return fmt.Errorf("expects %s", what)
+		}
+	}
+}

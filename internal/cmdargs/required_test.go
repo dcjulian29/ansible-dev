@@ -108,3 +108,51 @@ func TestRequired_OneArgumentPassesThrough(t *testing.T) {
 		t.Fatalf("Execute() error = %v, want the PreRunE error", err)
 	}
 }
+
+// TestAtLeastOne builds a command shaped like "shell": AtLeastOne as its Args
+// check and a RunE that records the words it received. The failing PreRunE of
+// the Required tests is left out; Args runs before it either way.
+func TestAtLeastOne(t *testing.T) {
+	execute := func(args ...string) (string, []string, error) {
+		var got []string
+
+		cmd := &cobra.Command{
+			Use:           "shell -- <command>",
+			Args:          AtLeastOne("a shell command after --"),
+			SilenceErrors: true,
+			SilenceUsage:  true,
+			RunE: func(_ *cobra.Command, args []string) error {
+				got = args
+				return nil
+			},
+		}
+
+		cmd.Flags().Bool("verbose", false, "")
+
+		var out bytes.Buffer
+
+		cmd.SetOut(&out)
+		cmd.SetErr(&out)
+		cmd.SetArgs(args)
+
+		err := cmd.Execute()
+
+		return out.String(), got, err
+	}
+
+	for _, bare := range [][]string{nil, {"--"}} {
+		out, got, err := execute(bare...)
+		if err != nil || !strings.Contains(out, "Usage:") || got != nil {
+			t.Errorf("%q: error = %v, ran with %q; want the help and no error", bare, err, got)
+		}
+	}
+
+	if _, _, err := execute("--verbose"); err == nil || err.Error() != "expects a shell command after --" {
+		t.Errorf("flags only: error = %v, want the missing command named", err)
+	}
+
+	_, got, err := execute("--", "cat", "/etc/hostname")
+	if err != nil || strings.Join(got, " ") != "cat /etc/hostname" {
+		t.Errorf("words: error = %v, args = %q; want every word passed through", err, got)
+	}
+}
