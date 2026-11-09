@@ -23,6 +23,7 @@ import (
 	"errors"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/ansible-dev/internal/vagrant"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +37,9 @@ var playFromFlags ansible.Play
 //	ansible-dev play <role> [flags]
 //
 // The command requires exactly one positional argument — the name of the
-// Ansible role to apply. It generates a temporary single-role playbook via
+// Ansible role to apply — checked by [cmdargs.Required]: typed bare, it
+// prints its help and exits 0; given flags but no role name, it fails with
+// "expects a role name". It generates a temporary single-role playbook via
 // [ansible.GenerateRolePlay] and then executes it via [ansible.ExecutePlay].
 //
 // Flags are mapped to [ansible.Play] fields as follows:
@@ -66,8 +69,12 @@ var playFromFlags ansible.Play
 // status.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "play <role>",
-		Args:  cobra.ExactArgs(1),
+		Use: "play <role>",
+		// cmdargs.Required rather than cobra.ExactArgs(1): a bare "play"
+		// prints the help instead of cobra's generic "accepts 1 arg(s)", even
+		// outside a development folder, and "play --check" names the missing
+		// role.
+		Args:  cmdargs.Required("a role name"),
 		Short: "Provision ansible role to Ansible development vagrant environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			playFromFlags.Name = args[0]
