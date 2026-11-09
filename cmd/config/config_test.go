@@ -246,6 +246,20 @@ func TestIgnoreAdd_BarePrintsHelp(t *testing.T) {
 	}
 }
 
+// Same as add: a bare "remove" used to fail with "accepts 1 arg(s)".
+func TestIgnoreRemove_BarePrintsHelp(t *testing.T) {
+	before := currentRoleIgnore(t)
+
+	out, err := run(t, roleIgnore(), "remove")
+	if err != nil || !strings.Contains(out, "Usage:") {
+		t.Errorf("bare remove: error = %v, output = %q; want the help and no error", err, out)
+	}
+
+	if got := currentRoleIgnore(t); len(got) != len(before) {
+		t.Errorf("ignore list = %v, want it unchanged at %v", got, before)
+	}
+}
+
 func TestNamespaceCmd_RejectsAnInvalidNamespace(t *testing.T) {
 	if _, err := run(t, namespaceCmd(), "acme.corp"); err == nil {
 		t.Error("namespace command error = nil, want an error for a value containing '.'")

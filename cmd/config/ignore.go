@@ -113,7 +113,9 @@ func ignoreRemoveCmd(
 	return &cobra.Command{
 		Use:   "remove <substring>",
 		Short: "Remove a path substring from the ignore list",
-		Args:  cobra.ExactArgs(1),
+		// cmdargs.Required rather than cobra.ExactArgs(1): a bare "remove"
+		// prints the help instead of cobra's generic "accepts 1 arg(s)".
+		Args: cmdargs.Required("a path substring"),
 		RunE: func(_ *cobra.Command, args []string) error {
 			cfg, err := settings.Load()
 			if err != nil {
