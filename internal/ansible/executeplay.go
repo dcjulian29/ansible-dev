@@ -17,6 +17,7 @@ limitations under the License.
 package ansible
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -65,9 +66,14 @@ func playArguments(play Play) []string {
 // ExecutePlay runs the ansible-playbook command using the temporary playbook
 // located at ".tmp/play.yml". Command-line flags are derived from the fields
 // of the supplied Play struct. If an "ansible.log" file exists it is removed
-// before execution. An error is returned if the log cannot be removed or if
-// ansible-playbook exits with a non-zero status.
+// before execution. An error is returned if the playbook does not exist, if
+// the log cannot be removed, or if ansible-playbook exits with a non-zero
+// status.
 func ExecutePlay(play Play) error {
+	if !filesystem.FileExist(".tmp/play.yml") {
+		return errors.New("can't execute playbook: .tmp/play.yml does not exist")
+	}
+
 	param := append(playArguments(play), ".tmp/play.yml")
 
 	if filesystem.FileExist("ansible.log") {
@@ -77,11 +83,8 @@ func ExecutePlay(play Play) error {
 		}
 	}
 
-	if filesystem.FileExist(".tmp/play.yml") {
-		err := execute.ExternalProgram("ansible-playbook", param...)
-		if err != nil {
-			return fmt.Errorf("can't execute playbook: %v", err)
-		}
+	if err := execute.ExternalProgram("ansible-playbook", param...); err != nil {
+		return fmt.Errorf("can't execute playbook: %v", err)
 	}
 
 	return nil

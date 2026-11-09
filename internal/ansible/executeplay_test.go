@@ -17,6 +17,7 @@ limitations under the License.
 package ansible
 
 import (
+	"os"
 	"slices"
 	"testing"
 )
@@ -47,6 +48,24 @@ func TestPlayArguments_EveryField(t *testing.T) {
 
 	if !slices.Equal(got, want) {
 		t.Errorf("playArguments = %q, want %q", got, want)
+	}
+}
+
+// A missing playbook used to return nil without running anything. It must
+// fail, and fail before the previous run's ansible.log is deleted.
+func TestExecutePlay_MissingPlaybook(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	if err := os.WriteFile("ansible.log", []byte("last run"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := ExecutePlay(Play{Name: "acme.nginx"}); err == nil {
+		t.Error("ExecutePlay returned nil, want an error for the missing playbook")
+	}
+
+	if _, err := os.Stat("ansible.log"); err != nil {
+		t.Errorf("ansible.log was removed: %v", err)
 	}
 }
 
