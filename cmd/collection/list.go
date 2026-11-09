@@ -79,8 +79,10 @@ func listCmd() *cobra.Command {
 					// Type before source, the same order as the entries'
 					// keys in requirements.yml.
 					row := []string{c.Name, kind, c.Source, c.Version}
+					// Returned, not swallowed: "return nil" here stopped the
+					// listing with no output and exit 0.
 					if err := table.Append(row); err != nil {
-						return nil
+						return err
 					}
 				}
 
