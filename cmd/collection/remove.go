@@ -45,8 +45,7 @@ import (
 // requirements.yml, an error is returned.
 //
 // Note: this command only modifies requirements.yml — it does not
-// uninstall the collection files from the collections_path. Use
-// "ansible-dev collection purge" to remove installed artifacts.
+// uninstall the collection files from the collections_path.
 //
 // A PreRunE hook calls [ansible.EnsureAnsibleDirectory] to verify the
 // current directory is a valid Ansible project.

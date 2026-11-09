@@ -16,8 +16,7 @@ limitations under the License.
 
 // Package collection implements the "ansible-dev collection" command group,
 // which provides subcommands for managing Ansible Galaxy collections in the
-// development environment. Available subcommands include add, list, purge,
-// and remove.
+// development environment. Available subcommands are add, list, and remove.
 package collection
 
 import (
@@ -37,8 +36,12 @@ import (
 // The following subcommands are registered:
 //   - add:    add a new collection to requirements.yml.
 //   - list:   list all collections declared in requirements.yml.
-//   - purge:  remove all installed collection artifacts.
 //   - remove: remove a collection from requirements.yml.
+//
+// There is deliberately no command to delete installed collections. They
+// may live inside the container, where they cannot be removed from here, and
+// their folders are not isolated per collection the way roles are, so a
+// purge could only ever delete all of them at once.
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "collection",
@@ -54,7 +57,6 @@ func NewCommand() *cobra.Command {
 
 	cmd.AddCommand(addCmd())
 	cmd.AddCommand(listCmd())
-	cmd.AddCommand(purgeCmd())
 	cmd.AddCommand(removeCmd())
 
 	return cmd
