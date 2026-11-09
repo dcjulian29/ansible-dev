@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/ansible-dev/internal/settings"
 	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
@@ -73,7 +74,9 @@ func ignoreAddCmd(
 	return &cobra.Command{
 		Use:   "add <substring>",
 		Short: "Add a path substring to ignore",
-		Args:  cobra.ExactArgs(1),
+		// cmdargs.Required rather than cobra.ExactArgs(1): a bare "add" prints
+		// the help instead of cobra's generic "accepts 1 arg(s)".
+		Args: cmdargs.Required("a path substring"),
 		RunE: func(_ *cobra.Command, args []string) error {
 			cfg, err := settings.Load()
 			if err != nil {
