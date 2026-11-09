@@ -28,7 +28,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var playFromFlags ansible.Play
+func playFromFlags(cmd *cobra.Command, role string) ansible.Play {
+	flags := cmd.Flags()
+	play := ansible.Play{Name: role}
+
+	play.Tags, _ = flags.GetStringSlice("tags")
+	play.AskBecomePass, _ = flags.GetBool("ask-become-password")
+	play.AskVaultPass, _ = flags.GetBool("ask-vault-password")
+	play.Check, _ = flags.GetBool("check")
+	play.FlushCache, _ = flags.GetBool("flush-cache")
+	play.Step, _ = flags.GetBool("step")
+	play.Verbose, _ = flags.GetBool("verbose")
+
+	return play
+}
 
 // NewCommand creates and returns the Cobra command for "ansible-dev play".
 //
@@ -77,20 +90,13 @@ func NewCommand() *cobra.Command {
 		Args:  cmdargs.Required("a role name"),
 		Short: "Provision ansible role to Ansible development vagrant environment",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			playFromFlags.Name = args[0]
-			playFromFlags.Tags, _ = cmd.Flags().GetStringSlice("tags")
-			playFromFlags.AskBecomePass, _ = cmd.Flags().GetBool("becomepass")
-			playFromFlags.AskVaultPass, _ = cmd.Flags().GetBool("vaultpass")
-			playFromFlags.Check, _ = cmd.Flags().GetBool("check")
-			playFromFlags.FlushCache, _ = cmd.Flags().GetBool("flushcache")
-			playFromFlags.Step, _ = cmd.Flags().GetBool("step")
-			playFromFlags.Verbose, _ = cmd.Flags().GetBool("verbose")
+			play := playFromFlags(cmd, args[0])
 
-			err := ansible.GenerateRolePlay(playFromFlags.Name)
+			err := ansible.GenerateRolePlay(play.Name)
 			if err != nil {
 				return err
 			}
-			err = ansible.ExecutePlay(playFromFlags)
+			err = ansible.ExecutePlay(play)
 			if err != nil {
 				return err
 			}

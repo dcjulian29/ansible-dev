@@ -49,3 +49,37 @@ func TestNewCommand_MissingRoleName(t *testing.T) {
 		t.Errorf("flags only: error = %v, want %q", err, want)
 	}
 }
+
+// Every flag must reach the Play. --ask-vault-password, --ask-become-password
+// and --flush-cache used to be read under names that were never registered,
+// so they parsed without error and then silently did nothing.
+func TestPlayFromFlags_ReadsEveryFlag(t *testing.T) {
+	cmd := NewCommand()
+
+	err := cmd.ParseFlags([]string{
+		"--ask-vault-password", "--ask-become-password", "--flush-cache",
+		"--check", "--step", "--verbose", "--tags", "install,configure",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := playFromFlags(cmd, "acme.nginx")
+
+	for name, set := range map[string]bool{
+		"AskVaultPass":  got.AskVaultPass,
+		"AskBecomePass": got.AskBecomePass,
+		"FlushCache":    got.FlushCache,
+		"Check":         got.Check,
+		"Step":          got.Step,
+		"Verbose":       got.Verbose,
+	} {
+		if !set {
+			t.Errorf("%s = false, want true when its flag is given", name)
+		}
+	}
+
+	if got.Name != "acme.nginx" || strings.Join(got.Tags, ",") != "install,configure" {
+		t.Errorf("Name = %q, Tags = %q; want the role and both tags", got.Name, got.Tags)
+	}
+}
