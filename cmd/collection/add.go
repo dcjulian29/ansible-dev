@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
@@ -49,8 +50,10 @@ import (
 //     Defaults to the empty string (latest).
 //
 // The command prints a reminder that the collection must be restored
-// (installed) before it can be used. If no argument is supplied, the help
-// text is displayed instead.
+// (installed) before it can be used. The argument is checked by
+// [cmdargs.Required]: typed bare, the command prints its help and exits 0;
+// given flags but no collection name, it fails with "expects a collection
+// name".
 //
 // A PreRunE hook calls [ansible.EnsureAnsibleDirectory] to verify the
 // current directory is a valid Ansible project.
@@ -58,11 +61,11 @@ func addCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add <collection>",
 		Short: "Add Ansible collection to requirements.yml",
+		// Checked in Args rather than RunE so a bare "collection add" prints
+		// its help even outside a development folder, where PreRunE would fail
+		// first.
+		Args: cmdargs.Required("a collection name"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
 			name := args[0]
 
 			source, _ := cmd.Flags().GetString("source")
