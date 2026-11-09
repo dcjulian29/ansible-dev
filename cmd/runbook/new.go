@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/dcjulian29/ansible-dev/internal/ansible"
+	"github.com/dcjulian29/ansible-dev/internal/cmdargs"
 	"github.com/dcjulian29/go-toolbox/textformat"
 	"github.com/spf13/cobra"
 )
@@ -44,16 +45,18 @@ import (
 //   - --publish, -p:     create and push a public GitHub repository for the
 //     runbook via git and gh (default false).
 //
-// If no argument is supplied, the help text is displayed instead.
+// The argument is checked by [cmdargs.Required]: typed bare, the command
+// prints its help and exits 0; given flags but no runbook name, it fails with
+// "expects a runbook name".
 func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <runbook>",
 		Short: "Scaffold a new Ansible runbook repository",
+		// A bare "runbook new" prints the help; with flags but no name it
+		// fails with "expects a runbook name", and extra names are refused
+		// rather than ignored. The same rule as the other commands.
+		Args: cmdargs.Required("a runbook name"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
 			name := args[0]
 			description, _ := cmd.Flags().GetString("description")
 
