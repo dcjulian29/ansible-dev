@@ -214,6 +214,32 @@ func TestNewCmd_PublishStopsBeforeForceWhenTheCloneExists(t *testing.T) {
 	}
 }
 
+// An existing role without --force used to be refused only after
+// "ansible-galaxy --version" had run (a container start on Windows). With PATH
+// empty that call would fail, so getting "exists" proves the refusal now comes
+// first; "creating role" is no longer printed before it either.
+func TestNewCmd_ExistingRoleIsRefusedBeforeAnsibleRuns(t *testing.T) {
+	t.Chdir(t.TempDir())
+
+	if err := os.WriteFile("ansible.cfg", []byte("[defaults]\nroles_path = ./roles\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.MkdirAll(filepath.Join("roles", "acme.x"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("PATH", "")
+
+	cmd := newCmd()
+	cmd.SetArgs([]string{"acme.x"})
+
+	err := cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "exists. Use '--force'") {
+		t.Errorf("role new error = %v, want the existing role refused before ansible-galaxy runs", err)
+	}
+}
+
 func TestNewCmd_RegistersItsFlags(t *testing.T) {
 	cmd := newCmd()
 

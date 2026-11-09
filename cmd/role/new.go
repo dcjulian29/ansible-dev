@@ -151,6 +151,29 @@ func newCmd() *cobra.Command {
 				return err
 			}
 
+			// The development copy is always named "<namespace>.<name>", like
+			// every other role under roles_path, whichever form was typed. The
+			// existence check, --force and ansible-galaxy must all use this one
+			// name: checking one folder and removing another would let --force
+			// delete the wrong role. (The published clone keeps the bare name;
+			// see [ansible.PublishRole].)
+			qualified := ansible.QualifiedRoleName(namespace, role)
+			force, _ := cmd.Flags().GetBool("force")
+
+			folder, err := ansible.RoleFolder(qualified)
+			if err != nil {
+				return err
+			}
+
+			// Refused here, before ansible-galaxy is asked for its version (a
+			// container start on Windows), so an existing role fails at once.
+			// --force removes it further down, once every other check passed.
+			exists := ansible.RoleFolderExists(qualified)
+
+			if exists && !force {
+				return fmt.Errorf("role '%s' exists. Use '--force' to replace", qualified)
+			}
+
 			// Every flag is checked here, before --force can remove an existing
 			// role, so a bad value never costs the role it was meant to replace.
 
@@ -179,8 +202,6 @@ func newCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			qualified := ansible.QualifiedRoleName(namespace, role)
 
 			// With --publish, the requirements.yml entry is added now, in
 			// memory, and saved only once publishing succeeds. Doing it here,
@@ -219,24 +240,9 @@ func newCmd() *cobra.Command {
 
 			fmt.Println(textformat.Info(fmt.Sprintf("creating role '%s'", qualified)))
 
-			// The development copy is always named "<namespace>.<name>", like
-			// every other role under roles_path, whichever form was typed. The
-			// existence check, --force and ansible-galaxy must all use this one
-			// name: checking one folder and removing another would let --force
-			// delete the wrong role. (The published clone keeps the bare name;
-			// see [ansible.PublishRole].)
-			force, _ := cmd.Flags().GetBool("force")
-
-			folder, err := ansible.RoleFolder(qualified)
-			if err != nil {
-				return err
-			}
-
-			if ansible.RoleFolderExists(qualified) {
-				if !force {
-					return fmt.Errorf("role '%s' exists. Use '--force' to replace", qualified)
-				}
-
+			// Reaching here with an existing role means --force was given (the
+			// refusal is checked above), and every other check has passed.
+			if exists {
 				if err := filesystem.RemoveDirectory(folder); err != nil {
 					return err
 				}
