@@ -76,7 +76,9 @@ func listCmd() *cobra.Command {
 						kind = "galaxy"
 					}
 
-					row := []string{c.Name, c.Source, kind, c.Version}
+					// Type before source, the same order as the entries'
+					// keys in requirements.yml.
+					row := []string{c.Name, kind, c.Source, c.Version}
 					if err := table.Append(row); err != nil {
 						return nil
 					}
