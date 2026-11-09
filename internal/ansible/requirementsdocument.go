@@ -206,6 +206,14 @@ func (r *RequirementsDocument) add(key, kind string, item *yaml.Node) error {
 		}
 	}
 
+	// An empty list is written "[]" (Save does that itself once the last entry
+	// is removed), and the encoder keeps a parsed node's flow style, so an
+	// entry added to it would come out inline as "roles: [{name: ...}]".
+	// Clearing the flag writes the list, and a root mapping read as "{}", as
+	// block YAML like the rest of the file.
+	list.Style &^= yaml.FlowStyle
+	r.doc.Content[0].Style &^= yaml.FlowStyle
+
 	list.Content = append(list.Content, item)
 
 	return nil

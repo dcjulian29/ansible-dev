@@ -222,6 +222,32 @@ func TestRequirementsDocument_AddToAnEmptyDocument(t *testing.T) {
 	}
 }
 
+// Removing the last role saves "roles: []", and a document can be written
+// "{}". Adding to either must give block YAML, not the inline
+// "roles: [{name: acme.x, src: acme.x}]" the parsed flow style produced.
+func TestRequirementsDocument_AddToAFlowStyleList(t *testing.T) {
+	want := "---\nroles:\n  - name: acme.x\n    src: acme.x\n"
+
+	for name, content := range map[string]string{
+		"empty list":    "---\nroles: []\n",
+		"empty mapping": "--- {}\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			requirementsProject(t, content)
+
+			doc := openRequirements(t)
+
+			if err := doc.AddRole(Role{Name: "acme.x", Source: "acme.x"}); err != nil {
+				t.Fatal(err)
+			}
+
+			if got := save(t, doc); got != want {
+				t.Errorf("requirements.yml =\n%s\nwant\n%s", got, want)
+			}
+		})
+	}
+}
+
 // Each of these must stop the command: opening an empty document instead
 // would let the next Save replace the file with a single entry.
 func TestOpenRequirements_Errors(t *testing.T) {
