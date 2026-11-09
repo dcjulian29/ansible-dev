@@ -28,6 +28,40 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// resolveNamespace determines the namespace a new role belongs to, in
+// decreasing order of how explicitly it was chosen: the --namespace flag, then
+// a namespace written into the role argument itself ("acme.nginx"), then the
+// configured default.
+//
+// Reading it from the role argument is what keeps the existing habit of typing
+// a fully-qualified name working without also having to pass a flag, and lets a
+// one-off role for another organization be created without touching the
+// configuration. When none of the three supplies a value the command stops:
+// there is no default worth guessing, and the namespace is difficult to change
+// once it has been published.
+func resolveNamespace(cmd *cobra.Command, role string) (string, error) {
+	namespace, _ := cmd.Flags().GetString("namespace")
+
+	if namespace == "" {
+		namespace = ansible.RoleNamespace(role)
+	}
+
+	if namespace == "" {
+		configured, err := settings.Namespace()
+		if err != nil {
+			return "", err
+		}
+
+		namespace = configured
+	}
+
+	if err := ansible.ValidateNamespace(namespace); err != nil {
+		return "", err
+	}
+
+	return namespace, nil
+}
+
 // newCmd creates the Cobra command for "ansible-dev role new", which
 // scaffolds a new Ansible role (typically backed by "ansible-galaxy role init").
 //
@@ -96,40 +130,6 @@ import (
 // The composed description is printed before the template is applied, so the
 // added phrase is visible at the point it is chosen rather than only in the
 // generated files.
-// resolveNamespace determines the namespace a new role belongs to, in
-// decreasing order of how explicitly it was chosen: the --namespace flag, then
-// a namespace written into the role argument itself ("acme.nginx"), then the
-// configured default.
-//
-// Reading it from the role argument is what keeps the existing habit of typing
-// a fully-qualified name working without also having to pass a flag, and lets a
-// one-off role for another organization be created without touching the
-// configuration. When none of the three supplies a value the command stops:
-// there is no default worth guessing, and the namespace is difficult to change
-// once it has been published.
-func resolveNamespace(cmd *cobra.Command, role string) (string, error) {
-	namespace, _ := cmd.Flags().GetString("namespace")
-
-	if namespace == "" {
-		namespace = ansible.RoleNamespace(role)
-	}
-
-	if namespace == "" {
-		configured, err := settings.Namespace()
-		if err != nil {
-			return "", err
-		}
-
-		namespace = configured
-	}
-
-	if err := ansible.ValidateNamespace(namespace); err != nil {
-		return "", err
-	}
-
-	return namespace, nil
-}
-
 func newCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new <role>",
