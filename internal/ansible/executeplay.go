@@ -25,17 +25,14 @@ import (
 	"github.com/dcjulian29/go-toolbox/filesystem"
 )
 
-// ExecutePlay runs the ansible-playbook command using the temporary playbook
-// located at ".tmp/play.yml". Command-line flags are derived from the fields
-// of the supplied Play struct. If an "ansible.log" file exists it is removed
-// before execution. An error is returned if the log cannot be removed or if
-// ansible-playbook exits with a non-zero status.
-func ExecutePlay(play Play) error {
+// playArguments turns the fields of play into ansible-playbook flags, without
+// the playbook path. It is separate from ExecutePlay so a test can check every
+// field without running ansible-playbook.
+func playArguments(play Play) []string {
 	var param []string
 
 	if len(play.Tags) > 0 {
-		param = append(param, "--tags")
-		param = append(param, strings.Join(play.Tags, ","))
+		param = append(param, "--tags", strings.Join(play.Tags, ","))
 	}
 
 	if play.FlushCache {
@@ -50,6 +47,10 @@ func ExecutePlay(play Play) error {
 		param = append(param, "--ask-vault-password")
 	}
 
+	if play.AskBecomePass {
+		param = append(param, "--ask-become-pass")
+	}
+
 	if play.Verbose {
 		param = append(param, "-v")
 	}
@@ -58,7 +59,16 @@ func ExecutePlay(play Play) error {
 		param = append(param, "--step")
 	}
 
-	param = append(param, ".tmp/play.yml")
+	return param
+}
+
+// ExecutePlay runs the ansible-playbook command using the temporary playbook
+// located at ".tmp/play.yml". Command-line flags are derived from the fields
+// of the supplied Play struct. If an "ansible.log" file exists it is removed
+// before execution. An error is returned if the log cannot be removed or if
+// ansible-playbook exits with a non-zero status.
+func ExecutePlay(play Play) error {
+	param := append(playArguments(play), ".tmp/play.yml")
 
 	if filesystem.FileExist("ansible.log") {
 		err := os.Remove("ansible.log")
